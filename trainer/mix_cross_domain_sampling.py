@@ -11,7 +11,7 @@ from torch import nn, optim
 from tensorboardX import SummaryWriter
 
 from model import RelationNet
-from data_loader import CrossDomainSamplingDataLoader, CrossDomainSamplingEvalDataLoader
+from data_loader import MixDomainSamplingDataLoader, CrossDomainSamplingEvalDataLoader
 
 torch.backends.cudnn.deterministic = True
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class CrossDomainSamplingTrainer:
+class MixCrossDomainSamplingTrainer:
     def __init__(self, config, mode, use_cpu):
         super().__init__()
 
@@ -64,7 +64,7 @@ class CrossDomainSamplingTrainer:
 
 
     def build_train_data_loader(self):
-        self.train_data_loader = CrossDomainSamplingDataLoader(
+        self.train_data_loader = MixDomainSamplingDataLoader(
             source_meta_list=self.mode_config["domain_dataset.source.meta"],
             root_dir=self.mode_config["domain_dataset.source.root_dir"],
             way=self.mode_config["way"],
@@ -149,6 +149,7 @@ class CrossDomainSamplingTrainer:
 
                 scores = self.model(support_images, query_images)   # (way * train_batch_size, way)
                 labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(1))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
+                print(labels)
                 labels = labels.to(self.device) # (train_batch_size, way)
                 loss = self.loss(scores, labels)
                 loss.backward()

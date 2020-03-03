@@ -11,15 +11,17 @@ from torch import nn, optim
 from tensorboardX import SummaryWriter
 
 from model import RelationNet
-from data_loader import CrossDomainSamplingDataLoader, CrossDomainSamplingEvalDataLoader
+from data_loader import IdenticalDomainSamplingDataLoader as SamplingDataLoader
+from data_loader import CrossDomainSamplingEvalDataLoader
 
 torch.backends.cudnn.deterministic = True
+torch.manual_seed(0)
 
 logger = logging.getLogger(__name__)
 
 
 
-class CrossDomainSamplingTrainer:
+class IdenticalCrossDomainSamplingTrainer:
     def __init__(self, config, mode, use_cpu):
         super().__init__()
 
@@ -64,7 +66,7 @@ class CrossDomainSamplingTrainer:
 
 
     def build_train_data_loader(self):
-        self.train_data_loader = CrossDomainSamplingDataLoader(
+        self.train_data_loader = SamplingDataLoader(
             source_meta_list=self.mode_config["domain_dataset.source.meta"],
             root_dir=self.mode_config["domain_dataset.source.root_dir"],
             way=self.mode_config["way"],

@@ -10,8 +10,9 @@ from tqdm import tqdm
 from torch import nn, optim
 from tensorboardX import SummaryWriter
 
-from model import RelationNet
-from data_loader import CrossDomainSamplingDataLoader, CrossDomainSamplingEvalDataLoader
+from model import PrototypicalNet
+from data_loader import MixDomainSamplingDataLoader as SamplingDataLoader
+from data_loader import CrossDomainSamplingEvalDataLoader
 
 torch.backends.cudnn.deterministic = True
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class CrossDomainSamplingTrainer:
+class ProtoMixDomainSamplingTrainer:
     def __init__(self, config, mode, use_cpu):
         super().__init__()
 
@@ -57,14 +58,14 @@ class CrossDomainSamplingTrainer:
 
 
     def build_model(self):
-        self.model = RelationNet(self.config["model.params"])
+        self.model = PrototypicalNet(self.config["model.params"])
         self.model.to(self.device)
 
         logging.info("| Build up the model: \n{}".format(self.model))
 
 
     def build_train_data_loader(self):
-        self.train_data_loader = CrossDomainSamplingDataLoader(
+        self.train_data_loader = SamplingDataLoader(
             source_meta_list=self.mode_config["domain_dataset.source.meta"],
             root_dir=self.mode_config["domain_dataset.source.root_dir"],
             way=self.mode_config["way"],
@@ -91,7 +92,7 @@ class CrossDomainSamplingTrainer:
 
 
     def build_loss(self):
-        self.loss = nn.MSELoss(reduction="mean").to(self.device)
+        self.loss = ProtoDistanceLoss().to(self.device)
 
     
     def build_summary_writer(self):
@@ -147,10 +148,10 @@ class CrossDomainSamplingTrainer:
                 support_images = support_images.to(self.device) # (way, self.shot, 3, H, W)
                 query_images = query_images.to(self.device)     # (way, train_batch_size, 3, H, W)
 
-                scores = self.model(support_images, query_images)   # (way * train_batch_size, way)
+                distances = self.model(support_images, query_images)   # (way * train_batch_size, way)
                 labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(1))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
                 labels = labels.to(self.device) # (train_batch_size, way)
-                loss = self.loss(scores, labels)
+                loss = self.loss(distances, labels)
                 loss.backward()
                 self.optim.step()
 
@@ -192,8 +193,8 @@ class CrossDomainSamplingTrainer:
 
 
     @staticmethod
-    def calculate_acc(scores, labels):
-        pred_labels = torch.argmax(scores, dim=1)
+    def calculate_acc(distances, labels):
+        pred_labels = torch.argmin(distances, dim=1)
         acc = torch.mean((pred_labels == labels).to(dtype=torch.float32)).unsqueeze(0)
 
         return acc
@@ -212,17 +213,17 @@ class CrossDomainSamplingTrainer:
 
             self.model.keep_support_features(support_data)
 
-            total_scores, total_labels = torch.tensor([]), torch.tensor([])
+            total_distances, total_labels = torch.tensor([]), torch.tensor([])
             for (query_images, query_labels) in self.val_data_loader:
                 query_images = query_images.to(self.device)
-                scores = self.model.inference(query_images)
-                scores = scores.detach().cpu()
-                total_scores = torch.cat([total_scores, scores])
+                distances = self.model.inference(query_images)
+                distances = distances.detach().cpu()
+                total_distances = torch.cat([total_distances, distances])
                 total_labels = torch.cat([total_labels, query_labels])
             
             self.model.clean_support_features()
 
-            acc = self.calculate_acc(total_scores, total_labels)
+            acc = self.calculate_acc(total_distances, total_labels)
             total_acc_list = torch.cat([total_acc_list, acc])
 
         self.val_data_loader.reset_episode()
@@ -294,3 +295,21 @@ class CrossDomainSamplingTrainer:
             
             # load global step
             self.global_step = checkpoint["global_step"]
+
+
+
+class ProtoDistanceLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+
+    def forward(self, distances, labels):
+        labels = labels.to(dtype=torch.bool)
+        pos_loss = distances.masked_select(labels).sum()
+        epsilon = 1e-7
+        neg_loss = torch.sum(torch.log(torch.sum(torch.exp(-distances.masked_fill(labels, float("inf"))), dim=1) + epsilon))
+        # neg_loss = torch.log(torch.sum(torch.exp(-distances.masked_select(~labels))) + 10 ** -6)
+        loss = (pos_loss + neg_loss) / (labels.size(0) * labels.size(1))
+
+        return loss
+        

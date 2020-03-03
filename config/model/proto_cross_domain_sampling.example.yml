@@ -1,0 +1,67 @@
+model:
+  name: "ProtoCrossDomainSampling"
+  params:
+    embedding_extractor:
+      channel_size: 64
+
+
+checkpoint:
+  save_dir: "./checkpoint/proto_cross_domain_sampling.example/"
+  load_path: "./checkpoint/proto_cross_domain_sampling.example/ProtoCrossDomainSamplingTrainer.checkpoint.pkl"
+
+
+cuda:
+  id: 0
+
+
+modes:
+  train:
+    total_step: 100000
+    report_step: 500
+    save_step: 10000
+    val_step: 1
+    lr: 0.0001
+    gamma: 0.99
+    way: 5
+    shot: 5
+    train_batch_size: 1
+    domain_dataset:
+      source:
+        root_dir: "./data/PACS/kfold"
+        meta:
+          - "./data/meta/photo.meta.json"
+          - "./data/meta/art_painting.meta.json"
+          - "./data/meta/cartoon.meta.json"
+          - "./data/meta/sketch.meta.json"
+      val:
+        root_dir: "./data/mini-imagenet/"
+        meta: "./data/meta/miniimagenet.meta.json"
+      target:
+        - ""
+
+  resume:
+    total_step: 500000
+    report_step: 500
+    save_step: 10000
+    val_step: 2000
+    lr: 0.0001
+    gamma: 0.99
+    way: 5
+    shot: 5
+    train_batch_size: 5
+    domain_dataset:
+      source:
+        root_dir: "./data/PACS/kfold"
+        meta:
+          - ""
+          - ""
+          - ""
+          - ""
+      target:
+        - ""
+
+  eval:
+    domain_dataset:
+      root_dir: ""
+      target:
+        - ""
