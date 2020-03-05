@@ -1,5 +1,6 @@
 model:
   name: "CrossDomainSampling"
+  notes: ""
   params:
     embedding_extractor:
       channel_size: 64
@@ -21,15 +22,14 @@ cuda:
 
 modes:
   train:
-    total_step: 500000
-    report_step: 500
-    save_step: 10000
-    val_step: 500
+    total_step: 20000
+    report_step: 100
+    save_step: 2000
+    val_step: 200
     lr: 0.0001
-    gamma: 0.99
     way: 5
     shot: 5
-    train_batch_size: 5
+    train_batch_size: 1
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -45,15 +45,14 @@ modes:
         - ""
 
   resume:
-    total_step: 500000
-    report_step: 500
-    save_step: 10000
-    val_step: 2000
+    total_step: 20000
+    report_step: 100
+    save_step: 2000
+    val_step: 200
     lr: 0.0001
-    gamma: 0.99
     way: 5
     shot: 5
-    train_batch_size: 5
+    train_batch_size: 1
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"

@@ -1,13 +1,14 @@
 model:
   name: "ProtoMixDomainSampling"
+  notes: ""
   params:
     embedding_extractor:
       channel_size: 64
 
 
 checkpoint:
-  save_dir: "./checkpoint/proto_mix_domain_sampling.3/"
-  load_path: "./checkpoint/proto_mix_domain_sampling.3/ProtoMixDomainSamplingTrainer.checkpoint.pkl"
+  save_dir: "./checkpoint/proto_mix_domain_sampling.example/"
+  load_path: "./checkpoint/proto_mix_domain_sampling.example/ProtoMixDomainSamplingTrainer.checkpoint.pkl"
 
 
 cuda:
@@ -16,12 +17,11 @@ cuda:
 
 modes:
   train:
-    total_step: 50000
+    total_step: 20000
     report_step: 100
-    save_step: 5000
-    val_step: 500
+    save_step: 2000
+    val_step: 200
     lr: 0.0001
-    gamma: 0.99
     way: 5
     shot: 5
     train_batch_size: 1
@@ -40,15 +40,14 @@ modes:
         - ""
 
   resume:
-    total_step: 500000
-    report_step: 500
-    save_step: 10000
-    val_step: 2000
+    total_step: 20000
+    report_step: 100
+    save_step: 2000
+    val_step: 200
     lr: 0.0001
-    gamma: 0.99
     way: 5
     shot: 5
-    train_batch_size: 5
+    train_batch_size: 1
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
