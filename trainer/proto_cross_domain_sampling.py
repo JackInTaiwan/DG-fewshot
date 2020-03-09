@@ -88,7 +88,7 @@ class ProtoCrossDomainSamplingTrainer:
         # NOTE: Must init optimizer after the model is moved to expected device to ensure the
         # consistency of the optimizer state dtype
         lr = self.mode_config["lr"]
-        self.optim = optim.Adam(self.model.parameters(), lr=lr)
+        self.optim = optim.SGD(self.model.parameters(), lr=lr)
 
 
     def build_loss(self):
@@ -149,7 +149,7 @@ class ProtoCrossDomainSamplingTrainer:
                 query_images = query_images.to(self.device)     # (way, train_batch_size, 3, H, W)
 
                 distances = self.model(support_images, query_images)   # (way * train_batch_size, way)
-                labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(1))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
+                labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(0))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
                 labels = labels.to(self.device) # (train_batch_size, way)
                 loss = self.loss(distances, labels)
                 loss.backward()

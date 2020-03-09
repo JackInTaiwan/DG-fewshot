@@ -40,6 +40,11 @@ class PrototypicalNet(nn.Module):
             nn.BatchNorm2d(conv_block_channel_size),
             nn.ReLU(True),
             nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+            nn.BatchNorm2d(conv_block_channel_size),
+            nn.ReLU(True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
         )
     
 

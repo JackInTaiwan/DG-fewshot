@@ -149,7 +149,7 @@ class ProtoIdenticalDomainSamplingTrainer:
                 query_images = query_images.to(self.device)     # (way, train_batch_size, 3, H, W)
 
                 distances = self.model(support_images, query_images)   # (way * train_batch_size, way)
-                labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(1))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
+                labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(0))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
                 labels = labels.to(self.device) # (train_batch_size, way)
                 loss = self.loss(distances, labels)
                 loss.backward()
@@ -308,7 +308,6 @@ class ProtoDistanceLoss(nn.Module):
         pos_loss = distances.masked_select(labels).sum()
         epsilon = 1e-7
         neg_loss = torch.sum(torch.log(torch.sum(torch.exp(-distances.masked_fill(labels, float("inf"))), dim=1) + epsilon))
-        # neg_loss = torch.log(torch.sum(torch.exp(-distances.masked_select(~labels))) + 10 ** -6)
         loss = (pos_loss + neg_loss) / (labels.size(0) * labels.size(1))
 
         return loss

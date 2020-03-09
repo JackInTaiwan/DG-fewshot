@@ -36,7 +36,6 @@ class ClassDataset(IterableDataset):
             
             image_fp = random.sample(self.item_pool, 1)[0]
             self.item_pool.remove(image_fp)
-
             image = Image.open(image_fp)
             image = self.image_preprocess(image)
 
@@ -285,6 +284,40 @@ class MixDomainSamplingDataLoader(CrossDomainSamplingDataLoader):
             # sample domains
             domain_indices = list(range(len(self.source_dataloader_pool)))
             selected_domain_indices = random.choices(domain_indices, k=2)
+            support_domain = self.source_dataloader_pool[selected_domain_indices[0]]
+            query_domain = self.source_dataloader_pool[selected_domain_indices[1]]
+
+            # sample classes
+            selected_class_indices = random.sample(list(range(self.class_num)), self.way)
+            support_images = support_domain.get_images(selected_class_indices, self.shot)   # (way, self.shot, 3, H, W)
+            query_images = query_domain.get_images(selected_class_indices, self.batch_size) # (way, self.batch_size, 3, H, W)
+
+            yield (support_images, query_images)
+
+
+
+class PseudoDomainSamplingDataLoader(CrossDomainSamplingDataLoader):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+    def __iter__(self):
+        while True:
+            # Pseudo Case
+            pseudo_class_indices = list(range(len(self.source_dataloader_pool)))
+            selected_pseudo_class_indices = random.sample(pseudo_class_indices, 4)
+            selected_pseudo_domain_indices = random.sample(list(range(self.class_num)), 2)
+            data = [self.source_dataloader_pool[selected_pseudo_class_index].get_images(selected_pseudo_domain_indices, self.shot).unsqueeze(0) for selected_pseudo_class_index in selected_pseudo_class_indices]
+            data = torch.cat(data)
+            support_images = data[:, 0]                     # (way, self.shot, 3, H, W)
+            query_images = data[:, 1, :self.batch_size]     # (way, self.shot, 3, H, W)
+
+            yield (support_images, query_images)
+
+            # Original Case (Follow CrossDomainSamplingDataLoader)
+            # sample domains
+            domain_indices = list(range(len(self.source_dataloader_pool)))
+            selected_domain_indices = random.sample(domain_indices, 2)
             support_domain = self.source_dataloader_pool[selected_domain_indices[0]]
             query_domain = self.source_dataloader_pool[selected_domain_indices[1]]
 

@@ -149,10 +149,7 @@ class ProtoPseudoDomainSamplingTrainer:
                 support_images = support_images.to(self.device) # (way, self.shot, 3, H, W)
                 query_images = query_images.to(self.device)     # (way, train_batch_size, 3, H, W)
                 distances = self.model(support_images, query_images)   # (way * train_batch_size, way)
-                # BUG
-                # fix logical error in all trainers
-                # for i in range(support_images.size(0))
-                labels = torch.tensor([[1 if i == j // query_images.size(0) else 0 for i in range(support_images.size(0))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
+                labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(0))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
                 labels = labels.to(self.device) # (way * train_batch_size, way)
 
                 loss = self.loss(distances, labels)
@@ -170,9 +167,6 @@ class ProtoPseudoDomainSamplingTrainer:
                 self.optim.zero_grad()
                 self.global_step += 1
                 accum_step += 1
-
-                # # FIXME
-                # self.lr_scheduler.step()
 
                 if self.global_step % self.report_step == 0:
                     avg_loss = accum_loss / accum_step

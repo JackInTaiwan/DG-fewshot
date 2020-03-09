@@ -3,4 +3,5 @@ from .data_loader import (
     CrossDomainSamplingEvalDataLoader,
     IdenticalDomainSamplingDataLoader,
     MixDomainSamplingDataLoader,
+    PseudoDomainSamplingDataLoader,
 )
