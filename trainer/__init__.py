@@ -5,6 +5,7 @@ from . import (
     proto_cross_domain_sampling,
     proto_identical_domain_sampling,
     proto_mix_domain_sampling,
+    proto_pseudo_domain_sampling,
 )
 
 
@@ -16,4 +17,5 @@ TRAINERS = {
     "ProtoCrossDomainSampling": proto_cross_domain_sampling.ProtoCrossDomainSamplingTrainer,
     "ProtoIdenticalDomainSampling": proto_identical_domain_sampling.ProtoIdenticalDomainSamplingTrainer,
     "ProtoMixDomainSampling": proto_mix_domain_sampling.ProtoMixDomainSamplingTrainer,
+    "ProtoPseudoDomainSampling": proto_pseudo_domain_sampling.ProtoPseudoDomainSamplingTrainer,
 }
