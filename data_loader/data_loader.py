@@ -108,11 +108,12 @@ class FewShotDataLoader:
 
 
 class CrossDomainSamplingDataLoader:
-    def __init__(self, source_meta_list, root_dir, way, shot, batch_size, mode):
+    def __init__(self, source_meta_list, root_dir, way, shot, input_image_size, batch_size, mode):
         self.root_dir = root_dir
         self.way = way
         self.shot = shot
         self.mode = mode
+        self.input_image_size = input_image_size
         self.batch_size = batch_size
         self.source_meta_list = source_meta_list
 
@@ -125,10 +126,7 @@ class CrossDomainSamplingDataLoader:
         source_dataloader_pool = []
 
         for meta_fp in self.source_meta_list:
-            # FIXME
-            # hard code input_image_size
-            input_image_size = (64, 64)
-            dataloader = FewShotDataLoader(self.root_dir, meta_fp, self.way, self.shot, self.mode, input_image_size)
+            dataloader = FewShotDataLoader(self.root_dir, meta_fp, self.way, self.shot, self.mode, self.input_image_size)
             source_dataloader_pool.append(dataloader)
 
         # check and build self.class_num
@@ -159,7 +157,7 @@ class CrossDomainSamplingDataLoader:
 
 
 class CrossDomainSamplingEvalDataLoader:
-    def __init__(self, mode, meta_fp, root_dir, batch_size, input_image_size=(64, 64)):
+    def __init__(self, mode, meta_fp, root_dir, batch_size, input_image_size):
         super().__init__()
         self.mode = mode
         self.meta_fp = meta_fp
@@ -268,7 +266,7 @@ class IdenticalDomainSamplingDataLoader(CrossDomainSamplingDataLoader):
             # sample classes
             selected_class_indices = random.sample(list(range(self.class_num)), self.way)
             support_images = support_domain.get_images(selected_class_indices, self.shot)   # (way, self.shot, 3, H, W)
-            query_images = query_domain.get_images(selected_class_indices, 1)               # (way, 1, 3, H, W)
+            query_images = query_domain.get_images(selected_class_indices, self.batch_size) # (way, 1, 3, H, W)
 
             yield (support_images, query_images)
             
