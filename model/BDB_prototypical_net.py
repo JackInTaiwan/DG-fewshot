@@ -1,12 +1,13 @@
 import copy
 import torch
+import random
 import numpy as np
 
 from torch import nn
 
 
 
-class PrototypicalNet(nn.Module):
+class BDBPrototypicalNet(nn.Module):
     def __init__(self, params):
         super().__init__()
         self.params = params
@@ -45,10 +46,8 @@ class PrototypicalNet(nn.Module):
             nn.BatchNorm2d(conv_block_channel_size),
             nn.ReLU(True),
             # FIXME
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            # nn.MaxPool2d(kernel_size=4, stride=4),
+            # nn.MaxPool2d(kernel_size=2, stride=2),
 
-            # FIXME
             nn.Tanh()
         )
     
@@ -60,6 +59,13 @@ class PrototypicalNet(nn.Module):
         query_images = query_images.view(-1, query_images.size(2), query_images.size(3), query_images.size(4))
         
         embeddings = self.embedding_extractor(torch.cat([support_images, query_images], dim=0))
+        # BDB
+        block_size = int(embeddings.size(2) * self.params["block_ratio"])
+        selected_x, selected_y = random.sample(range(0, embeddings.size(3) - block_size), 1)[0], random.sample(range(0, embeddings.size(2) - block_size), 1)[0]
+        mask = torch.zeros_like(embeddings, dtype=torch.bool)
+        mask[:, :, selected_y:selected_y+block_size, selected_x:selected_x+block_size] = 1
+        embeddings = embeddings.masked_fill(mask, value=0)
+        embeddings = nn.functional.adaptive_max_pool2d(embeddings, output_size=1)
 
         support_embeddings = embeddings[:support_images.size(0)]
         support_embeddings = support_embeddings.view(way, shot, -1)
@@ -80,6 +86,7 @@ class PrototypicalNet(nn.Module):
         support_images = support_images.view(-1, support_images.size(2), support_images.size(3), support_images.size(4))
         with torch.no_grad():
             embeddings = self.embedding_extractor(support_images)
+            embeddings = nn.functional.adaptive_max_pool2d(embeddings, output_size=1)
             embeddings = embeddings.view(way, shot, -1)
             embeddings = torch.mean(embeddings, dim=1).squeeze(dim=1)
 
@@ -99,6 +106,7 @@ class PrototypicalNet(nn.Module):
             way = support_embeddings.size(0)
 
             query_embeddings = self.embedding_extractor(query_images)
+            query_embeddings = nn.functional.adaptive_max_pool2d(query_embeddings, output_size=1)
             
             repeated_support_embeddings = support_embeddings.repeat(query_embeddings.size(0), 1).unsqueeze(1)
             repeated_query_embeddings = query_embeddings.view(query_embeddings.size(0), -1).repeat(1, way)
