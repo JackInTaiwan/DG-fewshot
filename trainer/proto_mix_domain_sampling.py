@@ -88,7 +88,7 @@ class ProtoMixDomainSamplingTrainer:
         # NOTE: Must init optimizer after the model is moved to expected device to ensure the
         # consistency of the optimizer state dtype
         lr = self.mode_config["lr"]
-        self.optim = optim.Adam(self.model.parameters(), lr=lr)
+        self.optim = optim.SGD(self.model.parameters(), lr=lr)
 
 
     def build_loss(self):

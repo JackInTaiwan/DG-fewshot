@@ -10,6 +10,8 @@ from tqdm import tqdm
 from torch import nn, optim
 from tensorboardX import SummaryWriter
 
+from util import warmup
+
 from model import PrototypicalNet
 from data_loader import IdenticalDomainSamplingDataLoader as SamplingDataLoader
 from data_loader import CrossDomainSamplingEvalDataLoader
@@ -70,6 +72,7 @@ class ProtoIdenticalDomainSamplingTrainer:
             root_dir=self.mode_config["domain_dataset.source.root_dir"],
             way=self.mode_config["way"],
             shot=self.mode_config["shot"],
+            input_image_size=(self.mode_config["input_image_size"], self.mode_config["input_image_size"]),
             batch_size=self.mode_config["train_batch_size"],
             mode="train"
         )
@@ -79,6 +82,7 @@ class ProtoIdenticalDomainSamplingTrainer:
         self.val_data_loader = CrossDomainSamplingEvalDataLoader(
             meta_fp=self.mode_config["domain_dataset.val.meta"],
             root_dir=self.mode_config["domain_dataset.val.root_dir"],
+            input_image_size=(self.mode_config["input_image_size"], self.mode_config["input_image_size"]),
             batch_size=16,
             mode="validation"
         )
@@ -88,7 +92,8 @@ class ProtoIdenticalDomainSamplingTrainer:
         # NOTE: Must init optimizer after the model is moved to expected device to ensure the
         # consistency of the optimizer state dtype
         lr = self.mode_config["lr"]
-        self.optim = optim.Adam(self.model.parameters(), lr=lr)
+        self.optim = optim.SGD(self.model.parameters(), lr=lr)
+        self.warmup_scheduler = warmup.LinearWarmup(self.optim, warmup_period=self.mode_config["warmup_period"])
 
 
     def build_loss(self):
@@ -166,6 +171,8 @@ class ProtoIdenticalDomainSamplingTrainer:
                 self.optim.zero_grad()
                 self.global_step += 1
                 accum_step += 1
+
+                self.warmup_scheduler.dampen()
 
                 if self.global_step % self.report_step == 0:
                     avg_loss = accum_loss / accum_step

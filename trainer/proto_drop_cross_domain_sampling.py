@@ -11,7 +11,7 @@ from torch import nn, optim
 from tensorboardX import SummaryWriter
 import util.warmup as warmup
 
-from model import PrototypicalNet
+from model import BDBPrototypicalNet
 from data_loader import CrossDomainSamplingDataLoader as SamplingDataLoader
 from data_loader import CrossDomainSamplingEvalDataLoader
 
@@ -59,7 +59,7 @@ class ProtoCrossDomainSamplingTrainer:
 
 
     def build_model(self):
-        self.model = PrototypicalNet(self.config["model.params"])
+        self.model = BDBPrototypicalNet(self.config["model.params"])
         self.model.to(self.device)
 
         logging.info("| Build up the model: \n{}".format(self.model))
