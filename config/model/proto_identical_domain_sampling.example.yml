@@ -3,7 +3,7 @@ model:
   notes: ""
   params:
     embedding_extractor:
-      channel_size: 64
+      channel_size: 256
 
 
 checkpoint:
@@ -12,7 +12,7 @@ checkpoint:
 
 
 cuda:
-  id: 0
+  id: 1
 
 
 modes:
@@ -21,9 +21,10 @@ modes:
     report_step: 100
     save_step: 2000
     val_step: 200
-    lr: 0.0001
-    way: 5
-    shot: 5
+    lr: 0.001
+    way: 2
+    shot: 10
+    input_image_size: 64
     train_batch_size: 1
     domain_dataset:
       source:

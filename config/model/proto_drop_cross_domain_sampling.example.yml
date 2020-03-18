@@ -1,14 +1,14 @@
 model:
-  name: "ProtoCrossDomainSampling"
-  notes: ""
+  name: "ProtoCrossDomainBDBSampling"
+  notes: "add nn.Tanh() at the tail / warmup.LinearWarmup warmup_period=3000 / image_size=128"
   params:
+    block_ratio: 0.4
     embedding_extractor:
       channel_size: 256
 
-
 checkpoint:
-  save_dir: "./checkpoint/proto_cross_domain_sampling.example/"
-  load_path: "./checkpoint/proto_cross_domain_sampling.example/ProtoCrossDomainSamplingTrainer.checkpoint.pkl"
+  save_dir: "./checkpoint/proto_drop_cross_domain_sampling.example/"
+  load_path: "./checkpoint/proto_drop_cross_domain_sampling.example/ProtoCrossDomainSamplingTrainer.checkpoint.pkl"
 
 
 cuda:
@@ -17,16 +17,16 @@ cuda:
 
 modes:
   train:
-    total_step: 20000
+    total_step: 10000
     report_step: 100
-    save_step: 2000
-    val_step: 5000
-    lr: 1.0
-    warmup_period: 1
+    save_step: 1000
+    val_step: 10
+    lr: 0.0005
+    warmup_period: 3000
     way: 5
     shot: 5
-    input_image_size: 64
     train_batch_size: 1
+    image_size: 128
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -42,14 +42,16 @@ modes:
         - ""
 
   resume:
-    total_step: 20000
-    report_step: 100
-    save_step: 2000
-    val_step: 200
+    total_step: 500000
+    report_step: 500
+    save_step: 10000
+    val_step: 2000
     lr: 0.0001
+    warmup_period: 4000
+    gamma: 0.99
     way: 5
     shot: 5
-    train_batch_size: 1
+    train_batch_size: 5
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
