@@ -31,9 +31,9 @@ def get_dataset(file_dir):
 def generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query_num, val_episode, val_query_num):
     dataset = get_dataset(file_dir)
 
-    TEST_PERCENTAGE = 0.5
+    TEST_PERCENTAGE = 0.7
 
-    test_class_name_pool = random.sample(dataset.keys(), int(len(dataset) * 0.7))
+    test_class_name_pool = random.sample(dataset.keys(), int(len(dataset) * TEST_PERCENTAGE))
     val_class_name_pool = [class_name for class_name in dataset.keys() if class_name not in test_class_name_pool]
 
     # Generate test episode dataset
