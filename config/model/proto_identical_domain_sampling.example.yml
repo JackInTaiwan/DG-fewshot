@@ -3,7 +3,7 @@ model:
   notes: ""
   params:
     embedding_extractor:
-      channel_size: 256
+      channel_size: 512
 
 
 checkpoint:
@@ -20,17 +20,19 @@ modes:
     total_step: 20000
     report_step: 100
     save_step: 2000
-    val_step: 200
-    lr: 0.001
-    way: 2
-    shot: 10
+    val_step: 400
+    optimizer: "SGD"
+    lr: 0.0005
+    warmup_period: 3000
+    way: 5
+    shot: 5
     input_image_size: 64
     train_batch_size: 1
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
         meta:
-          - "./data/meta/photo.meta.json"
+          # - "./data/meta/photo.meta.json"
           - "./data/meta/art_painting.meta.json"
           - "./data/meta/cartoon.meta.json"
           - "./data/meta/sketch.meta.json"
@@ -41,22 +43,28 @@ modes:
         - ""
 
   resume:
-    total_step: 20000
+    total_step: 40000
     report_step: 100
     save_step: 2000
-    val_step: 200
-    lr: 0.0001
+    val_step: 400
+    optimizer: "SGD"
+    lr: 0.0005
+    warmup_period: 3000
     way: 5
     shot: 5
+    input_image_size: 64
     train_batch_size: 1
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
         meta:
-          - ""
-          - ""
-          - ""
-          - ""
+          # - "./data/meta/photo.meta.json"
+          - "./data/meta/art_painting.meta.json"
+          - "./data/meta/cartoon.meta.json"
+          - "./data/meta/sketch.meta.json"
+      val:
+        root_dir: "./data/mini-imagenet/"
+        meta: "./data/meta/miniimagenet.meta.json"
       target:
         - ""
 
