@@ -49,7 +49,8 @@ class PrototypicalNet(nn.Module):
             # nn.MaxPool2d(kernel_size=4, stride=4),
 
             # FIXME
-            nn.Tanh()
+            # nn.Tanh(),
+            # nn.Sigmoid()
         )
     
 

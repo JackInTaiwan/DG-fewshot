@@ -83,7 +83,7 @@ class ProtoIdenticalDomainSamplingTrainer:
             meta_fp=self.mode_config["domain_dataset.val.meta"],
             root_dir=self.mode_config["domain_dataset.val.root_dir"],
             input_image_size=(self.mode_config["input_image_size"], self.mode_config["input_image_size"]),
-            batch_size=16,
+            batch_size=128,
             mode="validation"
         )
 
@@ -92,12 +92,18 @@ class ProtoIdenticalDomainSamplingTrainer:
         # NOTE: Must init optimizer after the model is moved to expected device to ensure the
         # consistency of the optimizer state dtype
         lr = self.mode_config["lr"]
-        self.optim = optim.SGD(self.model.parameters(), lr=lr)
+        if self.mode_config["optimizer"] == "SGD":
+            self.optim = optim.SGD(self.model.parameters(), lr=lr)
+        elif self.mode_config["optimizer"] == "Adam":
+            self.optim = optim.Adam(self.model.parameters(), lr=lr)
+            
         self.warmup_scheduler = warmup.LinearWarmup(self.optim, warmup_period=self.mode_config["warmup_period"])
 
 
     def build_loss(self):
-        self.loss = ProtoDistanceLoss().to(self.device)
+        # self.loss = ProtoDistanceLoss().to(self.device)
+        # FIXME
+        self.loss = nn.CrossEntropyLoss().to(self.device)
 
     
     def build_summary_writer(self):
@@ -154,9 +160,14 @@ class ProtoIdenticalDomainSamplingTrainer:
                 query_images = query_images.to(self.device)     # (way, train_batch_size, 3, H, W)
 
                 distances = self.model(support_images, query_images)   # (way * train_batch_size, way)
-                labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(0))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
+                # labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(0))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
+                # FIXME
+                labels = torch.tensor([j // query_images.size(1) for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.long)
+
                 labels = labels.to(self.device) # (train_batch_size, way)
-                loss = self.loss(distances, labels)
+                # loss = self.loss(distances, labels)
+                # FIXME
+                loss = self.loss(-distances, labels)
                 loss.backward()
                 self.optim.step()
 
