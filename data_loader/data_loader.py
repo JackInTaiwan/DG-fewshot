@@ -13,7 +13,7 @@ from torch.utils.data import Dataset, IterableDataset, DataLoader
 
 
 class ClassDataset(IterableDataset):
-    def __init__(self, index, items, input_image_size):
+    def __init__(self, index, items, input_image_size, augmentations):
         self.class_index = index
         self.items = items
         self.item_pool = copy.deepcopy(self.items)
@@ -21,13 +21,35 @@ class ClassDataset(IterableDataset):
 
         self.to_tensor = transforms.ToTensor()
         self.resize = transforms.Resize(self.input_image_size)
-        self.augmentation = transforms.Compose([
-            transforms.RandomCrop(self.input_image_size),
-        ])
+        self.augmentation = self.build_augmentation(augmentations)
         self.pytorch_pretrained_normalize = transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
         )
 
+
+    def build_augmentation(self, augmentations):
+        aug_list = []
+        if augmentations:
+            for aug in augmentations:
+                if aug == "RandomResizedCrop":
+                    aug_list.append(transforms.RandomResizedCrop(self.input_image_size, scale=(0.5, 1.0)))
+                elif aug == "RandomAffine":
+                    aug_list.append(transforms.RandomAffine(0))
+                elif aug == "RandomRotation":
+                    aug_list.append(transforms.RandomRotation(45))
+                elif aug == "ColorJitter":
+                    aug_list.append(transforms.ColorJitter())
+                elif aug == "RandomHorizontalFlip":
+                    aug_list.append(transforms.RandomHorizontalFlip())
+                else:
+                    raise ValueError("Unexpected augmentation '{}'.".format(aug))
+
+            return transforms.RandomApply(
+                [transforms.RandomChoice(aug_list)]
+            )
+
+        else:
+            return None
 
     def __iter__(self):
         while True:
@@ -44,6 +66,8 @@ class ClassDataset(IterableDataset):
 
     def image_preprocess(self, image):
         image = image.convert('RGB')
+        if self.augmentation:
+            image = self.augmentation(image)
         image = self.resize(image)
         image = self.to_tensor(image)
         image = self.pytorch_pretrained_normalize(image)
@@ -53,13 +77,14 @@ class ClassDataset(IterableDataset):
 
 
 class FewShotDataLoader:
-    def __init__(self, root_dir, meta_fp, way, shot, mode, input_image_size):
+    def __init__(self, root_dir, meta_fp, way, shot, mode, input_image_size, augmentations):
         self.root_dir = root_dir
         self.meta_fp = meta_fp
         self.way = way
         self.shot = shot
         self.mode = mode
         self.input_image_size = input_image_size
+        self.augmentations = augmentations
 
         self.class_dataset_dict = self.build_class_dataset_dict()
 
@@ -82,7 +107,8 @@ class FewShotDataLoader:
             class_dataset = ClassDataset(
                 index=class_index,
                 items=class_dataset_items,
-                input_image_size=self.input_image_size
+                input_image_size=self.input_image_size,
+                augmentations=self.augmentations
             )
             build_class_dataset_dict[class_index] = iter(class_dataset)
         
@@ -108,13 +134,14 @@ class FewShotDataLoader:
 
 
 class CrossDomainSamplingDataLoader:
-    def __init__(self, source_meta_list, root_dir, way, shot, input_image_size, batch_size, mode):
+    def __init__(self, source_meta_list, root_dir, way, shot, input_image_size, batch_size, augmentations, mode):
         self.root_dir = root_dir
         self.way = way
         self.shot = shot
         self.mode = mode
         self.input_image_size = input_image_size
         self.batch_size = batch_size
+        self.augmentations = augmentations
         self.source_meta_list = source_meta_list
 
         # to be built
@@ -126,7 +153,7 @@ class CrossDomainSamplingDataLoader:
         source_dataloader_pool = []
 
         for meta_fp in self.source_meta_list:
-            dataloader = FewShotDataLoader(self.root_dir, meta_fp, self.way, self.shot, self.mode, self.input_image_size)
+            dataloader = FewShotDataLoader(self.root_dir, meta_fp, self.way, self.shot, self.mode, self.input_image_size, self.augmentations)
             source_dataloader_pool.append(dataloader)
 
         # check and build self.class_num

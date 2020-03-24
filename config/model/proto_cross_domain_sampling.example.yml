@@ -12,7 +12,7 @@ checkpoint:
 
 
 cuda:
-  id: 1
+  id: 0
 
 
 modes:
@@ -20,6 +20,7 @@ modes:
     total_step: 20000
     report_step: 100
     save_step: 2000
+    start_val_step: 5000
     val_step: 400
     optimizer: "SGD"
     lr: 0.0005
@@ -28,6 +29,12 @@ modes:
     shot: 5
     input_image_size: 64
     train_batch_size: 1
+    augmentations:
+      - "RandomResizedCrop"
+      - "RandomAffine"
+      - "RandomRotation"
+      - "ColorJitter"
+      - "RandomHorizontalFlip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -46,6 +53,7 @@ modes:
     total_step: 40000
     report_step: 100
     save_step: 2000
+    start_val_step: 5000
     val_step: 400
     optimizer: "SGD"
     lr: 0.0005
@@ -54,6 +62,12 @@ modes:
     shot: 5
     input_image_size: 64
     train_batch_size: 1
+    augmentations:
+      - "RandomCrop"
+      - "RandomAffine"
+      - "RandomRotation"
+      - "ColorJitter"
+      - "RandomHorizontalFlip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
