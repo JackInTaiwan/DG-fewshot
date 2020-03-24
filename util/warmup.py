@@ -49,7 +49,8 @@ class BaseWarmup(object):
 
         for group, params in zip(self.optimizer.param_groups, self.warmup_params):
             omega = self.warmup_factor(step, **params)
-            group["lr"] = self.init_lr * omega
+            if omega != 1:
+                group["lr"] = self.init_lr * omega
 
     def warmup_factor(self, step, **params):
         raise NotImplementedError
