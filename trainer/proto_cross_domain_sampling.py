@@ -73,6 +73,7 @@ class ProtoCrossDomainSamplingTrainer:
             shot=self.mode_config["shot"],
             input_image_size=(self.mode_config["input_image_size"], self.mode_config["input_image_size"]),
             batch_size=self.mode_config["train_batch_size"],
+            augmentations=self.mode_config["augmentations"],
             mode="train"
         )
 
@@ -197,7 +198,7 @@ class ProtoCrossDomainSamplingTrainer:
                 if self.global_step % self.save_step == 0:
                     self.save_model()
 
-                if self.global_step % self.val_step == 0:
+                if self.global_step % self.val_step == 0 and self.global_step >= self.mode_config["start_val_step"]:
                     self.validation_run()
                 
                 # Stop training if it's past total_step
