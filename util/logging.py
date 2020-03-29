@@ -4,7 +4,7 @@ import logging.config
 
 
 
-def logging_config(log_file_path=None):
+def logging_config(save_dir=None, log_file_path=None):
     """Set up logging config for training."""
 
     config = {
@@ -33,9 +33,12 @@ def logging_config(log_file_path=None):
         }
     }
 
-    if log_file_path:
+    if save_dir or log_file_path:
+        log_file_path = log_file_path or os.path.join(save_dir, "training.log")
+
         if not os.path.exists(os.path.dirname(log_file_path)):
             os.makedirs(os.path.dirname(log_file_path))
+
         config["handlers"]["file"] = {
                 "level": "INFO",
                 "formatter": "standard",

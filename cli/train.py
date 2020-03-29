@@ -52,12 +52,11 @@ if __name__ == "__main__":
     # parse args
     args = parser.parse_args()
 
-    # set up logging config
-    logging_config(args.log)
-
     # init config
     config = Config(config_path=args.config)
     config.load_config()
+
+    logging_config(config["checkpoint.save_dir"], args.log)
     config.copy_config()
 
     # start training
