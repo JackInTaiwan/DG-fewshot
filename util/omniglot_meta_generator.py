@@ -20,7 +20,7 @@ def get_dataset(file_dir):
         dataset[class_name] = []
         for fn in os.listdir(os.path.join(file_dir, class_name)):
             if re.match(r".*\.png", fn) is not None:
-                dataset[class_name].append(fn)
+                dataset[class_name].append(os.path.join(os.path.basename(file_dir), class_name, fn))
     
     logging.info("| Alphabet '{}' Dataset contains {} classes.".format(file_dir, len(dataset)))
     return dataset
