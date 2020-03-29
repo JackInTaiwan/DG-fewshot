@@ -1,10 +1,11 @@
 model:
   name: "ProtoCrossDomainSampling"
-  notes: ""
+  notes: "with no photo / CrossEntropyLoss / test shot=1 / train shot=1"
   params:
     embedding_extractor:
+      backbone: "block5"
       channel_size: 512
-
+      
 
 checkpoint:
   save_dir: "./checkpoint/proto_cross_domain_sampling.example/"
@@ -17,24 +18,26 @@ cuda:
 
 modes:
   train:
-    total_step: 20000
+    total_step: 30000
     report_step: 100
-    save_step: 2000
-    start_val_step: 5000
-    val_step: 400
-    optimizer: "SGD"
-    lr: 0.0005
-    warmup_period: 3000
+    save_step: 3000
+    start_val_step: 1000
+    val_step: 1000
+    optimizer: "Adam"
+    lr: 0.001
+    warmup_period: 1000
+    gamma: 0.5
     way: 5
-    shot: 5
+    shot: 1
     input_image_size: 64
     train_batch_size: 1
     augmentations:
-      - "RandomResizedCrop"
-      - "RandomAffine"
-      - "RandomRotation"
-      - "ColorJitter"
-      - "RandomHorizontalFlip"
+      false
+      # - "RandomResizedCrop"
+      # - "RandomAffine"
+      # - "RandomRotation"
+      # - "ColorJitter"
+      # - "RandomHorizontalFlip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -45,29 +48,31 @@ modes:
           - "./data/meta/sketch.meta.json"
       val:
         root_dir: "./data/mini-imagenet/"
-        meta: "./data/meta/miniimagenet.meta.json"
+        meta: "./data/meta/miniimagenet_1_shot.meta.json"
       target:
         - ""
 
   resume:
     total_step: 40000
     report_step: 100
-    save_step: 2000
-    start_val_step: 5000
+    save_step: 1000
+    start_val_step: 3000
     val_step: 400
     optimizer: "SGD"
-    lr: 0.0005
-    warmup_period: 3000
+    lr: 0.0001
+    warmup_period: 1
+    gamma: 0.5
     way: 5
-    shot: 5
+    shot: 1
     input_image_size: 64
     train_batch_size: 1
     augmentations:
-      - "RandomCrop"
-      - "RandomAffine"
-      - "RandomRotation"
-      - "ColorJitter"
-      - "RandomHorizontalFlip"
+      false
+      # - "RandomResizedCrop"
+      # - "RandomAffine"
+      # - "RandomRotation"
+      # - "ColorJitter"
+      # - "RandomHorizontalFlip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -78,8 +83,9 @@ modes:
           - "./data/meta/sketch.meta.json"
       val:
         root_dir: "./data/mini-imagenet/"
-        meta: "./data/meta/miniimagenet.meta.json"
+        meta: "./data/meta/miniimagenet_1_shot.meta.json"
       target:
+        - ""
 
   eval:
     domain_dataset:
