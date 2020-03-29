@@ -3,6 +3,7 @@ import torch
 import numpy as np
 
 from torch import nn
+from torchvision.models import resnet18, resnet34
 
 
 
@@ -18,40 +19,49 @@ class PrototypicalNet(nn.Module):
 
 
     def build_embedding_extractor(self):
-        conv_block_channel_size = self.params["embedding_extractor.channel_size"]
+        if self.params["embedding_extractor.backbone"] == "block5":
+            conv_block_channel_size = self.params["embedding_extractor.channel_size"]
 
-        return nn.Sequential(
-            nn.Conv2d(3, conv_block_channel_size, 3, padding=1),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            return nn.Sequential(
+                nn.Conv2d(3, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-            # FIXME
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            # nn.MaxPool2d(kernel_size=4, stride=4),
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+            )
 
-            # FIXME
-            # nn.Tanh(),
-            # nn.Sigmoid()
-        )
+        elif self.params["embedding_extractor.backbone"] == "resnet18":
+            resnet = resnet18(pretrained=False)
+            
+            return nn.Sequential(
+                resnet.conv1,
+                resnet.bn1,
+                resnet.relu,
+                resnet.maxpool,
+                resnet.layer1,
+                resnet.layer2,
+                resnet.layer3,
+                resnet.layer4
+            )
     
 
     def forward(self, support_images, query_images):
@@ -61,7 +71,6 @@ class PrototypicalNet(nn.Module):
         query_images = query_images.view(-1, query_images.size(2), query_images.size(3), query_images.size(4))
         
         embeddings = self.embedding_extractor(torch.cat([support_images, query_images], dim=0))
-
         support_embeddings = embeddings[:support_images.size(0)]
         support_embeddings = support_embeddings.view(way, shot, -1)
         support_embeddings = torch.mean(support_embeddings, dim=1)
