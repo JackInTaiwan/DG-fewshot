@@ -1,0 +1,1 @@
+* Omniglot: https://github.com/brendenlake/omniglot/blob/master/python/images_background.zip (sha1sum 0d6255bc204965e19f93cc90b5621d5f413b2342)
