@@ -28,12 +28,10 @@ def get_dataset(file_dir):
 
 
 
-def generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query_num, val_episode, val_query_num):
+def generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query_num, val_episode, val_query_num, test_percentage):
     dataset = get_dataset(file_dir)
 
-    TEST_PERCENTAGE = 0.7
-
-    test_class_name_pool = random.sample(dataset.keys(), int(len(dataset) * TEST_PERCENTAGE))
+    test_class_name_pool = random.sample(dataset.keys(), int(len(dataset) * test_percentage))
     val_class_name_pool = [class_name for class_name in dataset.keys() if class_name not in test_class_name_pool]
 
     # Generate test episode dataset
@@ -99,12 +97,13 @@ if __name__ == "__main__":
     parser.add_argument("--test_query_num", action="store", type=int, default=50)
     parser.add_argument("--val_episode", action="store", type=int, default=50)
     parser.add_argument("--val_query_num", action="store", type=int, default=30)
+    parser.add_argument("--test_percentage", action="store", type=float, default=0.1)
 
     args = parser.parse_args()
     file_dir, output_dir = args.file_dir, args.output_dir
     way, shot = args.way, args.shot
-    test_episode, test_query_num, val_episode, val_query_num = args.test_episode, args.test_query_num, args.val_episode, args.val_query_num
+    test_episode, test_query_num, val_episode, val_query_num, test_percentage = args.test_episode, args.test_query_num, args.val_episode, args.val_query_num, args.test_percentage
 
     logging.info("| Start generating meta json file ...")
-    output_fp = generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query_num, val_episode, val_query_num)
+    output_fp = generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query_num, val_episode, val_query_num, test_percentage)
     logging.info("| Finish generating meta json file and save it in '{}' ...".format(output_fp))
