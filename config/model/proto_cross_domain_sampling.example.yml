@@ -9,7 +9,7 @@ model:
 
 checkpoint:
   save_dir: "./checkpoint/proto_cross_domain_sampling.example/"
-  load_path: "./checkpoint/proto_cross_domain_sampling.example/ProtoCrossDomainSamplingTrainer.checkpoint.pkl"
+  load_path: "./checkpoint/proto_cross_domain_sampling.example/ProtoCrossDomainSampling.checkpoint.pkl"
 
 
 cuda:
