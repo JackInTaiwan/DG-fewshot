@@ -3,7 +3,7 @@ model:
   notes: ""
   params:
     embedding_extractor:
-      channel_size: 256
+      channel_size: 512
 
 
 checkpoint:
