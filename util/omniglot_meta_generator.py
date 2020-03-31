@@ -54,7 +54,6 @@ def generate_meta_file(file_dir, output_fp, way, shot, val_episode, val_query_nu
         "validation": val_data
     }
     
-    output_fp = os.path.join(output_fp)
     with open(output_fp, "w") as f:
         json.dump(output, f)
 

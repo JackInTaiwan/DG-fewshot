@@ -10,8 +10,6 @@ from util.logging import logging_config
 logger = logging.getLogger(__name__)
 logging_config()
 
-random.seed(1234)
-
 
 
 def get_dataset(file_dir):
@@ -28,7 +26,7 @@ def get_dataset(file_dir):
 
 
 
-def generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query_num, val_episode, val_query_num, test_percentage):
+def generate_meta_file(file_dir, output_fp, way, shot, test_episode, test_query_num, val_episode, val_query_num, test_percentage):
     dataset = get_dataset(file_dir)
 
     test_class_name_pool = random.sample(dataset.keys(), int(len(dataset) * test_percentage))
@@ -79,7 +77,6 @@ def generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query
         "validation": val_data
     }
     
-    output_fp = os.path.join(output_dir, "miniimagenet.meta.json")
     with open(output_fp, "w") as f:
         json.dump(output, f)
 
@@ -90,20 +87,20 @@ def generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-f", "--file_dir", action="store", type=str, required=True)
-    parser.add_argument("-o", "--output_dir", action="store", type=str, required=True)
+    parser.add_argument("-o", "--output_fp", action="store", type=str, default="./data/meta/miniimagenet_5_shot.meta.json")
     parser.add_argument("--way", action="store", type=int, default=5)
     parser.add_argument("--shot", action="store", type=int, default=5)
     parser.add_argument("--test_episode", action="store", type=int, default=100)
     parser.add_argument("--test_query_num", action="store", type=int, default=50)
-    parser.add_argument("--val_episode", action="store", type=int, default=50)
-    parser.add_argument("--val_query_num", action="store", type=int, default=30)
+    parser.add_argument("--val_episode", action="store", type=int, default=100)
+    parser.add_argument("--val_query_num", action="store", type=int, default=50)
     parser.add_argument("--test_percentage", action="store", type=float, default=0.1)
 
     args = parser.parse_args()
-    file_dir, output_dir = args.file_dir, args.output_dir
+    file_dir, output_fp = args.file_dir, args.output_fp
     way, shot = args.way, args.shot
     test_episode, test_query_num, val_episode, val_query_num, test_percentage = args.test_episode, args.test_query_num, args.val_episode, args.val_query_num, args.test_percentage
 
     logging.info("| Start generating meta json file ...")
-    output_fp = generate_meta_file(file_dir, output_dir, way, shot, test_episode, test_query_num, val_episode, val_query_num, test_percentage)
+    output_fp = generate_meta_file(file_dir, output_fp, way, shot, test_episode, test_query_num, val_episode, val_query_num, test_percentage)
     logging.info("| Finish generating meta json file and save it in '{}' ...".format(output_fp))
