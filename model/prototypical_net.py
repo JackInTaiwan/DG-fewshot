@@ -49,6 +49,31 @@ class PrototypicalNet(nn.Module):
                 nn.MaxPool2d(kernel_size=2, stride=2),
             )
 
+        if self.params["embedding_extractor.backbone"] == "block4":
+            conv_block_channel_size = self.params["embedding_extractor.channel_size"]
+
+            return nn.Sequential(
+                nn.Conv2d(3, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+            )
+
         elif self.params["embedding_extractor.backbone"] == "resnet18":
             resnet = resnet18(pretrained=False)
             
