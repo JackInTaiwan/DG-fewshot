@@ -256,7 +256,7 @@ class CrossDomainSamplingEvalDataLoader:
         Return batched query images and corresponding labels.
         """
         episode_data = self.data[self.current_episode]
-        image_data, lable_data = [], []
+        image_data, label_data = [], []
 
         for class_data in episode_data["query"]:
             class_index, image_fp_list = class_data["index"], class_data["paths"]
@@ -265,15 +265,15 @@ class CrossDomainSamplingEvalDataLoader:
                 image = self.__image_preprocess(image)
                 image = image.unsqueeze(0)
                 image_data.append(image)
-                lable_data.append(class_index)
+                label_data.append(class_index)
         
         image_data = torch.cat(image_data)
-        lable_data = torch.tensor(lable_data, dtype=torch.float32)
+        label_data = torch.tensor(label_data, dtype=torch.float32)
         
         while len(image_data) > 0:
-            images, labels = image_data[:self.batch_size], lable_data[:self.batch_size]
+            images, labels = image_data[:self.batch_size], label_data[:self.batch_size]
             yield (images, labels)
-            image_data, lable_data = image_data[self.batch_size:], lable_data[self.batch_size:]
+            image_data, label_data = image_data[self.batch_size:], label_data[self.batch_size:]
 
 
 
