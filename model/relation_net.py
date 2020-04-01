@@ -4,6 +4,7 @@ import numpy as np
 
 from torch import nn
 from torch.nn import functional as F
+from torchvision.models import resnet18
 
 
 
@@ -15,62 +16,141 @@ class RelationNet(nn.Module):
         self.embedding_extractor = self.build_embedding_extractor()
         self.relation_net = self.build_relation_net()
 
+        self.init_weight()
+
         # dynamic
         self.kept_support_features = None   # (way, channel_size, FM_h, FM_w)
 
 
     def build_embedding_extractor(self):
-        conv_block_channel_size = self.params["embedding_extractor.channel_size"]
+        if self.params["embedding_extractor.backbone"] == "block5":
+            conv_block_channel_size = self.params["embedding_extractor.channel_size"]
 
-        return nn.Sequential(
-            # nn.InstanceNorm2d(3),
-            nn.Conv2d(3, conv_block_channel_size, 3, padding=1),
-            # nn.InstanceNorm2d(conv_block_channel_size),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            # nn.InstanceNorm2d(conv_block_channel_size),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            # nn.InstanceNorm2d(conv_block_channel_size),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
+            return nn.Sequential(
+                nn.Conv2d(3, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            # nn.InstanceNorm2d(conv_block_channel_size),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-        )
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                # nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                # nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                # nn.MaxPool2d(kernel_size=2, stride=2),
+            )
+
+        if self.params["embedding_extractor.backbone"] == "block4":
+            conv_block_channel_size = self.params["embedding_extractor.channel_size"]
+
+            return nn.Sequential(
+                nn.Conv2d(3, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                # nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                # nn.MaxPool2d(kernel_size=2, stride=2),
+            )
+        
+        if self.params["embedding_extractor.backbone"] == "block3":
+            conv_block_channel_size = self.params["embedding_extractor.channel_size"]
+
+            return nn.Sequential(
+                nn.Conv2d(3, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                # nn.MaxPool2d(kernel_size=2, stride=2),
+            )
+
+        elif self.params["embedding_extractor.backbone"] == "resnet18":
+            resnet = resnet18(pretrained=False)
+            
+            return nn.Sequential(
+                resnet.conv1,
+                resnet.bn1,
+                resnet.relu,
+                resnet.maxpool,
+                resnet.layer1,
+                resnet.layer2,
+                resnet.layer3,
+                resnet.layer4
+            )
 
     
     def build_relation_net(self):
-        conv_block_channel_size = self.params["relation_net.conv_block.channel_size"] * 2
-        fc_dim = self.params["relation_net.fc.dim"]
+        conv_block_channel_size = self.params["embedding_extractor.channel_size"] * 2
 
         return nn.Sequential(
             nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            # nn.InstanceNorm2d(conv_block_channel_size),
             nn.BatchNorm2d(conv_block_channel_size),
             nn.ReLU(True),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            # nn.Dropout2d(p=0.5),    # FIXME
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
-            # nn.InstanceNorm2d(conv_block_channel_size),
-            nn.BatchNorm2d(conv_block_channel_size),
-            nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            # nn.Dropout2d(p=0.5),    # FIXME
 
-            nn.Conv2d(conv_block_channel_size, fc_dim, 4, padding=0, stride=4),
+            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+            nn.BatchNorm2d(conv_block_channel_size),
             nn.ReLU(True),
-            # nn.Dropout2d(p=0.2),    # FIXME
-            nn.Conv2d(fc_dim, 1, 1),
+            nn.AdaptiveMaxPool2d((4, 4)),
+
+            nn.Flatten(),
+            nn.Linear(4*4*conv_block_channel_size, 8),
+            nn.ReLU(True),
+
+            nn.Linear(8, 1),
             nn.Sigmoid()
         )
     
+
+    def init_weight(self):
+        def weights_init(m):
+            classname = m.__class__.__name__
+            if classname.find('Conv') != -1:
+                nn.init.kaiming_normal_(m.weight.data)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif classname.find('Linear') != -1:
+                n = m.weight.size(1)
+                m.weight.data.normal_(0, 0.01)
+                m.bias.data = torch.ones(m.bias.data.size())
+        
+        self.embedding_extractor.apply(weights_init)
+        self.relation_net.apply(weights_init)
+
 
     def forward(self, support_images, query_images):
         way, shot = support_images.size(0), support_images.size(1)
@@ -82,7 +162,6 @@ class RelationNet(nn.Module):
         support_embeddings = embeddings[:support_images.size(0)]
         support_embeddings = support_embeddings.view(way, shot, support_embeddings.size(1), support_embeddings.size(2), support_embeddings.size(3))
         support_embeddings = torch.sum(support_embeddings, dim=1).squeeze(dim=1)
-        # support_embeddings = torch.mean(support_embeddings, dim=1).squeeze(dim=1)
         query_embeddings = embeddings[support_images.size(0):].squeeze(dim=1)
         repeated_support_embeddings = support_embeddings.repeat(query_embeddings.size(0), 1, 1, 1)
         repeated_query_embeddings = query_embeddings.repeat(1, way, 1, 1)
@@ -97,11 +176,11 @@ class RelationNet(nn.Module):
         # (way, shot, 3, h, w)
         way, shot = support_images.size(0), support_images.size(1)
         support_images = support_images.view(-1, support_images.size(2), support_images.size(3), support_images.size(4))
+        
         with torch.no_grad():
             embeddings = self.embedding_extractor(support_images)
             embeddings = embeddings.view(way, shot, embeddings.size(1), embeddings.size(2), embeddings.size(3))
             embeddings = torch.sum(embeddings, dim=1).squeeze(dim=1)
-            # embeddings = torch.mean(embeddings, dim=1).squeeze(dim=1)
 
         self.kept_support_features = embeddings
 
