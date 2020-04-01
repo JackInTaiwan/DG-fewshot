@@ -1,5 +1,5 @@
 from . import (
-    cross_domain_sampling,
+    rel_cross_domain_sampling,
     mix_cross_domain_sampling,
     identical_cross_domain_sampling,
     proto_cross_domain_sampling,
@@ -12,7 +12,7 @@ from . import (
 
 
 TRAINERS = {
-    "CrossDomainSampling": cross_domain_sampling.CrossDomainSamplingTrainer,
+    "RelCrossDomainSampling": rel_cross_domain_sampling.RelCrossDomainSamplingTrainer,
     "MixCrossDomainSampling": mix_cross_domain_sampling.MixCrossDomainSamplingTrainer,
     "IdenticalCrossDomainSampling": identical_cross_domain_sampling.IdenticalCrossDomainSamplingTrainer,
     "ProtoCrossDomainSampling": proto_cross_domain_sampling.ProtoCrossDomainSamplingTrainer,

@@ -5,13 +5,17 @@ import logging
 import shutil
 import torch
 import numpy as np
+import util.warmup as warmup
 
 from tqdm import tqdm
 from torch import nn, optim
+from torch.optim.lr_scheduler import StepLR
 from tensorboardX import SummaryWriter
 
+from .trainer_base import TrainerBase
 from model import RelationNet
-from data_loader import CrossDomainSamplingDataLoader, CrossDomainSamplingEvalDataLoader
+from data_loader import CrossDomainSamplingDataLoader as SamplingDataLoader
+from data_loader import CrossDomainSamplingEvalDataLoader
 
 torch.backends.cudnn.deterministic = True
 
@@ -19,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class CrossDomainSamplingTrainer:
+class RelCrossDomainSamplingTrainer(TrainerBase):
     def __init__(self, config, mode, use_cpu):
         super().__init__()
 
@@ -64,12 +68,14 @@ class CrossDomainSamplingTrainer:
 
 
     def build_train_data_loader(self):
-        self.train_data_loader = CrossDomainSamplingDataLoader(
+        self.train_data_loader = SamplingDataLoader(
             source_meta_list=self.mode_config["domain_dataset.source.meta"],
             root_dir=self.mode_config["domain_dataset.source.root_dir"],
             way=self.mode_config["way"],
             shot=self.mode_config["shot"],
+            input_image_size=(self.mode_config["input_image_size"], self.mode_config["input_image_size"]),
             batch_size=self.mode_config["train_batch_size"],
+            augmentations=self.mode_config["augmentations"],
             mode="train"
         )
 
@@ -78,7 +84,8 @@ class CrossDomainSamplingTrainer:
         self.val_data_loader = CrossDomainSamplingEvalDataLoader(
             meta_fp=self.mode_config["domain_dataset.val.meta"],
             root_dir=self.mode_config["domain_dataset.val.root_dir"],
-            batch_size=16,
+            input_image_size=(self.mode_config["input_image_size"], self.mode_config["input_image_size"]),
+            batch_size=128,
             mode="validation"
         )
 
@@ -87,9 +94,20 @@ class CrossDomainSamplingTrainer:
         # NOTE: Must init optimizer after the model is moved to expected device to ensure the
         # consistency of the optimizer state dtype
         lr = self.mode_config["lr"]
-        self.optim = optim.Adam(self.model.parameters(), lr=lr)
+        if self.mode_config["optimizer"] == "SGD":
+            self.optim = optim.SGD(self.model.parameters(), lr=lr)
+        elif self.mode_config["optimizer"] == "Adam":
+            self.optim = optim.Adam(self.model.parameters(), lr=lr)
+        
+        self.warmup_scheduler = warmup.LinearWarmup(
+            self.optim,
+            warmup_period=self.mode_config["warmup_period"],
+        )
 
+        # FIXME
+        self.step_scheduler = StepLR(self.optim, step_size=50000,gamma=0.5)
 
+        
     def build_loss(self):
         self.loss = nn.MSELoss(reduction="mean").to(self.device)
 
@@ -148,7 +166,7 @@ class CrossDomainSamplingTrainer:
                 query_images = query_images.to(self.device)     # (way, train_batch_size, 3, H, W)
 
                 scores = self.model(support_images, query_images)   # (way * train_batch_size, way)
-                labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(1))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
+                labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(0))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
                 labels = labels.to(self.device) # (train_batch_size, way)
                 loss = self.loss(scores, labels)
                 loss.backward()
@@ -162,9 +180,12 @@ class CrossDomainSamplingTrainer:
 
                 pbar.set_postfix_str("loss: {:.5f}, step time: {:.2f}".format(loss.cpu().detach().item(), step_time))
                 
+                accum_step += 1
                 self.optim.zero_grad()
                 self.global_step += 1
-                accum_step += 1
+                self.warmup_scheduler.dampen()
+                # FIXME
+                self.step_scheduler.step()
 
                 if self.global_step % self.report_step == 0:
                     avg_loss = accum_loss / accum_step
@@ -180,7 +201,7 @@ class CrossDomainSamplingTrainer:
                 if self.global_step % self.save_step == 0:
                     self.save_model()
 
-                if self.global_step % self.val_step == 0:
+                if self.global_step % self.val_step == 0 and self.global_step >= self.mode_config["start_val_step"]:
                     self.validation_run()
                 
                 # Stop training if it's past total_step
@@ -237,60 +258,3 @@ class CrossDomainSamplingTrainer:
         self.model.train()
         
         logger.info("| Finish validation.")
-
-
-    def save_model(self):
-        save_dir = self.config["checkpoint.save_dir"]
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-
-        save_path = os.path.join(save_dir, '{}.checkpoint.pkl'.format(self.__class__.__name__))
-
-        # Dump the state_dict of model in cpu mode
-        self.model.cpu()
-        model_state_dict = self.model.state_dict()
-        optim_state_dict = self.optim.state_dict()
-
-        # NOTE: do remember to move model back to right device because we just called self.model.cpu() above
-        self.model.to(self.device)
-        
-        # Save checkpoint
-        torch.save({
-            "model_state_dict": model_state_dict,
-            "optim_state_dict": optim_state_dict,
-            "global_step": self.global_step,
-            },
-            save_path
-        )
-
-        logger.info('| Checkpoint is saved successfully in \'{}\''.format(save_path))
-
-
-    def load_checkpoint(self):
-        if self.mode in ["train", "resume"]:
-            logger.info("| Load checkpoint from {} ...".format(self.config["checkpoint.load_path"]))
-
-            checkpoint = torch.load(self.config["checkpoint.load_path"])
-
-            # load model state_dict
-            
-            self.model.load_state_dict(checkpoint["model_state_dict"])
-
-            # load optim state_dict
-            self.optim.load_state_dict(checkpoint["optim_state_dict"])
-
-            # load global step
-            self.global_step = checkpoint["global_step"]
-
-            logger.info('| Model is loaded successfully from \'{}\''.format(self.config["checkpoint.load_path"]))
-        
-        elif self.mode == "eval":
-            logger.info("| Load checkpoint from {} ...".format(self.config["checkpoint.load_path"]))
-
-            checkpoint = torch.load(self.config["checkpoint.load_path"])
-            loaded_model_state_dict = checkpoint["model_state_dict"]
-
-            state_dict = self.model.state_dict()
-            
-            # load global step
-            self.global_step = checkpoint["global_step"]
