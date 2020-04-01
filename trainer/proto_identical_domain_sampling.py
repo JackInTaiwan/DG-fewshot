@@ -229,7 +229,8 @@ class ProtoIdenticalDomainSamplingTrainer(TrainerBase):
             return m,h
 
         logger.info("| Run validation ...")
-
+        torch.cuda.empty_cache()
+        
         self.model.eval()
 
         total_acc_list = torch.tensor([])
@@ -270,6 +271,8 @@ class ProtoIdenticalDomainSamplingTrainer(TrainerBase):
         if avg_acc > self.best_val_acc:
             self.best_val_acc = avg_acc
             self.save_checkpoint(save_best=True)
+
+        torch.cuda.empty_cache()
         
         logger.info("| Finish validation.")
 

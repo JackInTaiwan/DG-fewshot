@@ -72,6 +72,7 @@ class TrainerBase:
         torch.save({
             "model_state_dict": model_state_dict,
             "optim_state_dict": optim_state_dict,
+            "best_val_acc": self.best_val_acc,
             "global_step": self.global_step,
             },
             save_path
