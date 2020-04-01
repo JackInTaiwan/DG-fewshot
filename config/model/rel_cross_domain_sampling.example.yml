@@ -1,15 +1,15 @@
 model:
-  name: "ProtoCrossDomainSampling"
-  notes: "with no photo / CrossEntropyLoss / test shot=5 / train shot=5"
+  name: "RelCrossDomainSampling"
+  notes: "test shot=5 / train shot=5"
   params:
     embedding_extractor:
       backbone: "block5"
-      channel_size: 512
-      
+      channel_size: 256
+
 
 checkpoint:
-  save_dir: "./checkpoint/proto_cross_domain_sampling.example/"
-  load_path: "./checkpoint/proto_cross_domain_sampling.example/ProtoCrossDomainSamplingTrainer.checkpoint.pkl"
+  save_dir: "./checkpoint/rel_cross_domain_sampling.example/"
+  load_path: "./checkpoint/rel_cross_domain_sampling.example/RelCrossDomainSamplingTrainer.checkpoint.pkl"
 
 
 cuda:
@@ -21,14 +21,14 @@ modes:
     total_step: 30000
     report_step: 200
     save_step: 5000
-    start_val_step: 5000
+    start_val_step: 10000
     val_step: 500
-    optimizer: "SGD"
-    lr: 0.0
-    warmup_period: 3000
+    optimizer: "Adam"
+    lr: 0.001
+    warmup_period: 1000
     way: 5
     shot: 5
-    input_image_size: 84
+    input_image_size: 64
     train_batch_size: 1
     augmentations:
       false
@@ -36,7 +36,7 @@ modes:
       # - "RandomAffine"
       # - "RandomRotation"
       # - "ColorJitter"
-      # - "RandomHorizontalFlip"
+      # - "RandomHorizontalF1lip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -46,8 +46,8 @@ modes:
           - "./data/meta/cartoon.meta.json"
           - "./data/meta/sketch.meta.json"
       val:
-        root_dir: "./data/omniglot/"
-        meta: "./data/meta/omniglot_5_shot.meta.json"
+        root_dir: "./data/mini-imagenet/"
+        meta: "./data/meta/miniimagenet_5_shot.meta.json"
       target:
         - ""
 
@@ -55,14 +55,14 @@ modes:
     total_step: 40000
     report_step: 200
     save_step: 5000
-    start_val_step: 5000
-    val_step: 500
-    optimizer: "SGD"
+    start_val_step: 10000
+    val_step: 1
+    optimizer: "Adam"
     lr: 0.0005
-    warmup_period: 3000
+    warmup_period: 10000
     way: 5
-    shot: 1
-    input_image_size: 84
+    shot: 5
+    input_image_size: 64
     train_batch_size: 1
     augmentations:
       false
@@ -70,7 +70,7 @@ modes:
       # - "RandomAffine"
       # - "RandomRotation"
       # - "ColorJitter"
-      # - "RandomHorizontalFlip"
+      # - "RandomHorizontalF1lip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -80,8 +80,8 @@ modes:
           - "./data/meta/cartoon.meta.json"
           - "./data/meta/sketch.meta.json"
       val:
-        root_dir: "./data/omniglot/"
-        meta: "./data/meta/omniglot_5_shot.meta.json"
+        root_dir: "./data/mini-imagenet/"
+        meta: "./data/meta/miniimagenet_5_shot.meta.json"
       target:
         - ""
 
