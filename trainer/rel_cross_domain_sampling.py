@@ -271,6 +271,7 @@ class RelCrossDomainSamplingTrainer(TrainerBase):
 
         # save val_acc if it reaches best validation acc
         if avg_acc > self.best_val_acc:
+            self.best_val_acc = avg_acc
             self.save_checkpoint(save_best=True)
         
         logger.info("| Finish validation.")

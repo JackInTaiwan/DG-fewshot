@@ -56,7 +56,7 @@ class TrainerBase:
             os.makedirs(save_dir)
 
         if save_best:
-            save_path = os.path.join(save_dir, '{}.checkpoint.best.{}.pkl'.format(self.__class__.__name__, self.global_step))
+            save_path = os.path.join(save_dir, '{}.checkpoint.best.pkl'.format(self.__class__.__name__))
         else:
             save_path = os.path.join(save_dir, '{}.checkpoint.pkl'.format(self.__class__.__name__))
 
