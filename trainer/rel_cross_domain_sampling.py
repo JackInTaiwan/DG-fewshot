@@ -4,7 +4,9 @@ import time
 import logging
 import shutil
 import torch
+import scipy.stats
 import numpy as np
+import scipy as sp
 import util.warmup as warmup
 
 from tqdm import tqdm
@@ -199,7 +201,7 @@ class RelCrossDomainSamplingTrainer(TrainerBase):
                     accum_time, accum_step, accum_loss = 0, 0, 0
                 
                 if self.global_step % self.save_step == 0:
-                    self.save_model()
+                    self.save_checkpoint()
 
                 if self.global_step % self.val_step == 0 and self.global_step >= self.mode_config["start_val_step"]:
                     self.validation_run()
@@ -209,18 +211,26 @@ class RelCrossDomainSamplingTrainer(TrainerBase):
                     break
 
         # save trained model at the end
-        self.save_model()
+        self.save_checkpoint()
 
 
     @staticmethod
     def calculate_acc(scores, labels):
         pred_labels = torch.argmax(scores, dim=1)
         acc = torch.mean((pred_labels == labels).to(dtype=torch.float32)).unsqueeze(0)
+        std = torch.std((pred_labels == labels).to(dtype=torch.float32)).unsqueeze(0)
 
         return acc
 
 
     def validation_run(self):
+        def mean_confidence_interval(data, confidence=0.95):
+            a = 1.0 * np.array(data)
+            n = len(a)
+            m, se = np.mean(a), scipy.stats.sem(a)
+            h = se * sp.stats.t._ppf((1+confidence)/2., n-1)
+            return m,h
+
         logger.info("| Run validation ...")
 
         self.model.eval()
@@ -248,13 +258,19 @@ class RelCrossDomainSamplingTrainer(TrainerBase):
 
         self.val_data_loader.reset_episode()
 
-        avg_acc = total_acc_list.mean().item()
+        avg_acc, h = mean_confidence_interval(total_acc_list)
+
         
-        logger.info("| Average Acc: {:.5f}".format(avg_acc))
+        logger.info("| g-step: {}| Acc Avg: {:.5f} C.I.: {:.5f}".format(self.global_step, avg_acc, h))
         
         self.writer.add_scalar("val_acc", avg_acc, self.global_step)
+        self.writer.add_scalar("val_CI", h, self.global_step)
         self.writer.flush()
 
         self.model.train()
+
+        # save val_acc if it reaches best validation acc
+        if avg_acc > self.best_val_acc:
+            self.save_checkpoint(save_best=True)
         
         logger.info("| Finish validation.")
