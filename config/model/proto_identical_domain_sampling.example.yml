@@ -28,7 +28,7 @@ modes:
     warmup_period: 3000
     way: 5
     shot: 5
-    input_image_size: 84
+    input_image_size: 64
     train_batch_size: 1
     augmentations:
       false
@@ -46,8 +46,8 @@ modes:
           - "./data/meta/cartoon.meta.json"
           - "./data/meta/sketch.meta.json"
       val:
-        root_dir: "./data/mini-imagenet/"
-        meta: "./data/meta/miniimagenet_5_shot.meta.json"
+        root_dir: "./data/omniglot/"
+        meta: "./data/meta/omniglot_5_shot.meta.json"
       target:
         - ""
 
@@ -62,7 +62,7 @@ modes:
     warmup_period: 1
     way: 5
     shot: 5
-    input_image_size: 84
+    input_image_size: 64
     train_batch_size: 1
     augmentations:
       false
@@ -80,8 +80,8 @@ modes:
           - "./data/meta/cartoon.meta.json"
           - "./data/meta/sketch.meta.json"
       val:
-        root_dir: "./data/mini-imagenet/"
-        meta: "./data/meta/miniimagenet_5_shot.meta.json"
+        root_dir: "./data/omniglot/"
+        meta: "./data/meta/omniglot_5_shot.meta.json"
       target:
         - ""
 
