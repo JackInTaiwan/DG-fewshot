@@ -21,14 +21,14 @@ modes:
     total_step: 30000
     report_step: 200
     save_step: 5000
-    start_val_step: 5000
+    start_val_step: 2000
     val_step: 500
     optimizer: "SGD"
-    lr: 0.0
+    lr: 0.0005
     warmup_period: 3000
     way: 5
     shot: 5
-    input_image_size: 84
+    input_image_size: 64
     train_batch_size: 1
     augmentations:
       false
@@ -62,7 +62,7 @@ modes:
     warmup_period: 3000
     way: 5
     shot: 1
-    input_image_size: 84
+    input_image_size: 64
     train_batch_size: 1
     augmentations:
       false
