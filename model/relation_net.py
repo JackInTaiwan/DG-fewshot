@@ -114,10 +114,30 @@ class RelationNet(nn.Module):
 
     
     def build_relation_net(self):
-        conv_block_channel_size = self.params["embedding_extractor.channel_size"] * 2
+        # conv_block_channel_size = self.params["embedding_extractor.channel_size"] * 2
+
+        # return nn.Sequential(
+        #     nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+        #     nn.BatchNorm2d(conv_block_channel_size),
+        #     nn.ReLU(True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2),
+
+        #     nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+        #     nn.BatchNorm2d(conv_block_channel_size),
+        #     nn.ReLU(True),
+        #     nn.AdaptiveMaxPool2d((4, 4)),
+
+        #     nn.Flatten(),
+        #     nn.Linear(4*4*conv_block_channel_size, 8),
+        #     nn.ReLU(True),
+
+        #     nn.Linear(8, 1),
+        #     nn.Sigmoid()
+        # )
+        conv_block_channel_size = self.params["embedding_extractor.channel_size"]
 
         return nn.Sequential(
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+            nn.Conv2d(conv_block_channel_size*2, conv_block_channel_size, 3, padding=1),
             nn.BatchNorm2d(conv_block_channel_size),
             nn.ReLU(True),
             nn.MaxPool2d(kernel_size=2, stride=2),
