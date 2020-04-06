@@ -16,7 +16,7 @@ from tensorboardX import SummaryWriter
 
 from .trainer_base import TrainerBase
 from model import RelationNet
-from data_loader import CrossDomainSamplingDataLoader as SamplingDataLoader
+from data_loader import IdenticalDomainSamplingDataLoader as SamplingDataLoader
 from data_loader import CrossDomainSamplingEvalDataLoader
 
 torch.backends.cudnn.deterministic = True
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class RelCrossDomainSamplingTrainer(TrainerBase):
+class RelIdenticalDomainSamplingTrainer(TrainerBase):
     def __init__(self, config, mode, use_cpu):
         super().__init__()
 
