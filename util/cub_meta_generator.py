@@ -13,13 +13,12 @@ logging_config()
 
 
 def get_dataset(file_dir):
-    dataset = {}
-    for fn in os.listdir(file_dir):
-        if re.match(r".*\.jpg", fn) is not None:
-            class_name = fn[:9]
-            if class_name not in dataset:
-                dataset[class_name] = []
-            dataset[class_name].append(fn)
+    dataset = dict()
+    for class_name in os.listdir(file_dir):
+        if class_name not in dataset:
+            dataset[class_name] = []
+        for img_name in os.listdir(os.path.join(file_dir, class_name)):
+            dataset[class_name].append(os.path.join(class_name, img_name))
     
     logging.info("| Mini-imagenet Dataset contains {} classes.".format(len(dataset)))
     return dataset
@@ -59,6 +58,7 @@ def generate_meta_file(file_dir, output_fp, way, shot, test_episode, test_query_
         support_data, query_data = [], []
 
         for class_index, selected_class_name in enumerate(selected_class_name_list):
+            print(len(dataset[selected_class_name]))
             selected_fn_list = random.sample(dataset[selected_class_name], shot + val_query_num)
             selected_support_fn_list = selected_fn_list[:shot]
             selected_query_fn_list = selected_fn_list[shot:]
@@ -90,8 +90,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_fp", action="store", type=str, default="./data/meta/miniimagenet_5_shot.meta.json")
     parser.add_argument("--way", action="store", type=int, default=5)
     parser.add_argument("--shot", action="store", type=int, default=5)
-    parser.add_argument("--test_episode", action="store", type=int, default=100)
-    parser.add_argument("--test_query_num", action="store", type=int, default=50)
+    parser.add_argument("--test_episode", action="store", type=int, default=1)
+    parser.add_argument("--test_query_num", action="store", type=int, default=1)
     parser.add_argument("--val_episode", action="store", type=int, default=100)
     parser.add_argument("--val_query_num", action="store", type=int, default=50)
     parser.add_argument("--test_percentage", action="store", type=float, default=0.1)
