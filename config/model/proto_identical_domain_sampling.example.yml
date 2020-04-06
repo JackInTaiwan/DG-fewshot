@@ -1,6 +1,6 @@
 model:
   name: "ProtoIdenticalDomainSampling"
-  notes: "CrossEntropyLoss / test shot=1 / train shot=1"
+  notes: "CrossEntropyLoss / test shot=5 / train shot=5"
   params:
     embedding_extractor:
       backbone: "block5"
@@ -9,7 +9,7 @@ model:
 
 checkpoint:
   save_dir: "./checkpoint/proto_identical_domain_sampling.example/"
-  load_path: "./checkpoint/proto_identical_domain_sampling.example/ProtoIdenticalDomainSampling.checkpoint.pkl"
+  load_path: "./checkpoint/proto_identical_domain_sampling.example/ProtoIdenticalDomainSamplingTrainer.checkpoint.pkl"
 
 
 cuda:
@@ -22,12 +22,12 @@ modes:
     report_step: 200
     save_step: 5000
     start_val_step: 5000
-    val_step: 1000
+    val_step: 500
     optimizer: "SGD"
-    lr: 0.0
+    lr: 0.0005
     warmup_period: 3000
     way: 5
-    shot: 1
+    shot: 5
     input_image_size: 64
     train_batch_size: 1
     augmentations:
@@ -46,22 +46,22 @@ modes:
           - "./data/meta/cartoon.meta.json"
           - "./data/meta/sketch.meta.json"
       val:
-        root_dir: "./data/mini-imagenet/"
-        meta: "./data/meta/miniimagenet_1_shot.meta.json"
+        root_dir: "./data/omniglot/"
+        meta: "./data/meta/omniglot_5_shot.meta.json"
       target:
         - ""
 
   resume:
     total_step: 40000
-    report_step: 100
-    save_step: 1000
+    report_step: 200
+    save_step: 2000
     start_val_step: 5000
-    val_step: 400
+    val_step: 500
     optimizer: "SGD"
     lr: 0.0005
     warmup_period: 1
     way: 5
-    shot: 1
+    shot: 5
     input_image_size: 64
     train_batch_size: 1
     augmentations:
@@ -80,8 +80,8 @@ modes:
           - "./data/meta/cartoon.meta.json"
           - "./data/meta/sketch.meta.json"
       val:
-        root_dir: "./data/mini-imagenet/"
-        meta: "./data/meta/miniimagenet_1_shot.meta.json"
+        root_dir: "./data/omniglot/"
+        meta: "./data/meta/omniglot_5_shot.meta.json"
       target:
         - ""
 

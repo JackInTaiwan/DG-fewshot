@@ -4,7 +4,9 @@ import time
 import logging
 import shutil
 import torch
+import scipy.stats
 import numpy as np
+import scipy as sp
 
 from tqdm import tqdm
 from torch import nn, optim
@@ -38,6 +40,7 @@ class ProtoIdenticalDomainSamplingTrainer(TrainerBase):
         self.total_step = None
         self.global_epoch = 1
         self.global_step = 1
+        self.best_val_acc = 0
 
         # attrs need to build
         self.pid_num = None
@@ -162,13 +165,10 @@ class ProtoIdenticalDomainSamplingTrainer(TrainerBase):
                 query_images = query_images.to(self.device)     # (way, train_batch_size, 3, H, W)
 
                 distances = self.model(support_images, query_images)   # (way * train_batch_size, way)
-                # labels = torch.tensor([[1 if i == j // query_images.size(1) else 0 for i in range(support_images.size(0))] for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.float32)
-                # FIXME
-                labels = torch.tensor([j // query_images.size(1) for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.long)
 
+                labels = torch.tensor([j // query_images.size(1) for j in range(query_images.size(0) * query_images.size(1))], dtype=torch.long)
                 labels = labels.to(self.device) # (train_batch_size, way)
-                # loss = self.loss(distances, labels)
-                # FIXME
+                
                 loss = self.loss(-distances, labels)
                 loss.backward()
                 self.optim.step()
@@ -199,7 +199,7 @@ class ProtoIdenticalDomainSamplingTrainer(TrainerBase):
                     accum_time, accum_step, accum_loss = 0, 0, 0
                 
                 if self.global_step % self.save_step == 0:
-                    self.save_model()
+                    self.save_checkpoint()
 
                 if self.global_step % self.val_step == 0 and self.global_step >= self.mode_config["start_val_step"]:
                     self.validation_run()
@@ -209,7 +209,72 @@ class ProtoIdenticalDomainSamplingTrainer(TrainerBase):
                     break
 
         # save trained model at the end
-        self.save_model()
+        self.save_checkpoint()
+    
+
+    @staticmethod
+    def calculate_acc(distances, labels):
+        pred_labels = torch.argmin(distances, dim=1)
+        acc = torch.mean((pred_labels == labels).to(dtype=torch.float32)).unsqueeze(0)
+
+        return acc
+
+
+    def validation_run(self):
+        def mean_confidence_interval(data, confidence=0.95):
+            a = 1.0 * np.array(data)
+            n = len(a)
+            m, se = np.mean(a), scipy.stats.sem(a)
+            h = se * sp.stats.t._ppf((1+confidence)/2., n-1)
+            return m,h
+
+        logger.info("| Run validation ...")
+        torch.cuda.empty_cache()
+        
+        self.model.eval()
+
+        total_acc_list = torch.tensor([])
+        
+        while self.val_data_loader.update_episode():
+            support_data = self.val_data_loader.get_support_images()
+            support_data = support_data.to(self.device)
+
+            self.model.keep_support_features(support_data)
+
+            total_distances, total_labels = torch.tensor([]), torch.tensor([])
+            for (query_images, query_labels) in self.val_data_loader:
+                query_images = query_images.to(self.device)
+                distances = self.model.inference(query_images)
+                distances = distances.detach().cpu()
+                total_distances = torch.cat([total_distances, distances])
+                total_labels = torch.cat([total_labels, query_labels])
+            
+            self.model.clean_support_features()
+
+            acc = self.calculate_acc(total_distances, total_labels)
+            total_acc_list = torch.cat([total_acc_list, acc])
+
+        self.val_data_loader.reset_episode()
+        
+        avg_acc, h = mean_confidence_interval(total_acc_list)
+
+        
+        logger.info("| g-step: {}| Acc Avg: {:.5f} C.I.: {:.5f}".format(self.global_step, avg_acc, h))
+        
+        self.writer.add_scalar("val_acc", avg_acc, self.global_step)
+        self.writer.add_scalar("val_CI", h, self.global_step)
+        self.writer.flush()
+
+        self.model.train()
+
+        # save val_acc if it reaches best validation acc
+        if avg_acc > self.best_val_acc:
+            self.best_val_acc = avg_acc
+            self.save_checkpoint(save_best=True)
+
+        torch.cuda.empty_cache()
+        
+        logger.info("| Finish validation.")
 
 
 

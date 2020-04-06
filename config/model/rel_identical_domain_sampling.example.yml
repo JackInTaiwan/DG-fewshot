@@ -1,15 +1,15 @@
 model:
-  name: "ProtoCrossDomainSampling"
-  notes: "with no photo / CrossEntropyLoss / test shot=5 / train shot=5"
+  name: "RelIdenticalDomainSampling"
+  notes: "test shot=1 / train shot=1 / only A"
   params:
     embedding_extractor:
       backbone: "block5"
-      channel_size: 512
-      
+      channel_size: 128
+
 
 checkpoint:
-  save_dir: "./checkpoint/proto_cross_domain_sampling.example/"
-  load_path: "./checkpoint/proto_cross_domain_sampling.example/ProtoCrossDomainSamplingTrainer.checkpoint.pkl"
+  save_dir: "./checkpoint/rel_identical_domain_sampling.example/"
+  load_path: "./checkpoint/rel_identical_domain_sampling.example/RelIdenticalDomainSamplingTrainer.checkpoint.pkl"
 
 
 cuda:
@@ -18,47 +18,13 @@ cuda:
 
 modes:
   train:
-    total_step: 30000
+    total_step: 25000
     report_step: 200
     save_step: 5000
-    start_val_step: 2000
+    start_val_step: 3000
     val_step: 500
     optimizer: "SGD"
-    lr: 0.0005
-    warmup_period: 3000
-    way: 5
-    shot: 5
-    input_image_size: 64
-    train_batch_size: 1
-    augmentations:
-      false
-      # - "RandomResizedCrop"
-      # - "RandomAffine"
-      # - "RandomRotation"
-      # - "ColorJitter"
-      # - "RandomHorizontalFlip"
-    domain_dataset:
-      source:
-        root_dir: "./data/PACS/kfold"
-        meta:
-          # - "./data/meta/photo.meta.json"
-          - "./data/meta/art_painting.meta.json"
-          - "./data/meta/cartoon.meta.json"
-          - "./data/meta/sketch.meta.json"
-      val:
-        root_dir: "./data/omniglot/"
-        meta: "./data/meta/omniglot_5_shot.meta.json"
-      target:
-        - ""
-
-  resume:
-    total_step: 40000
-    report_step: 200
-    save_step: 5000
-    start_val_step: 5000
-    val_step: 500
-    optimizer: "SGD"
-    lr: 0.0005
+    lr: 0.05
     warmup_period: 3000
     way: 5
     shot: 1
@@ -70,18 +36,52 @@ modes:
       # - "RandomAffine"
       # - "RandomRotation"
       # - "ColorJitter"
-      # - "RandomHorizontalFlip"
+      # - "RandomHorizontalF1lip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
         meta:
           # - "./data/meta/photo.meta.json"
           - "./data/meta/art_painting.meta.json"
-          - "./data/meta/cartoon.meta.json"
-          - "./data/meta/sketch.meta.json"
+          # - "./data/meta/cartoon.meta.json"
+          # - "./data/meta/sketch.meta.json"
       val:
         root_dir: "./data/omniglot/"
-        meta: "./data/meta/omniglot_5_shot.meta.json"
+        meta: "./data/meta/omniglot_1_shot.meta.json"
+      target:
+        - ""
+
+  resume:
+    total_step: 25000
+    report_step: 200
+    save_step: 5000
+    start_val_step: 3000
+    val_step: 500
+    optimizer: "SGD"
+    lr: 0.05
+    warmup_period: 3000
+    way: 5
+    shot: 1
+    input_image_size: 64
+    train_batch_size: 1
+    augmentations:
+      false
+      # - "RandomResizedCrop"
+      # - "RandomAffine"
+      # - "RandomRotation"
+      # - "ColorJitter"
+      # - "RandomHorizontalF1lip"
+    domain_dataset:
+      source:
+        root_dir: "./data/PACS/kfold"
+        meta:
+          # - "./data/meta/photo.meta.json"
+          - "./data/meta/art_painting.meta.json"
+          # - "./data/meta/cartoon.meta.json"
+          # - "./data/meta/sketch.meta.json"
+      val:
+        root_dir: "./data/omniglot/"
+        meta: "./data/meta/omniglot_1_shot.meta.json"
       target:
         - ""
 
