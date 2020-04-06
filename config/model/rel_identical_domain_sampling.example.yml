@@ -1,6 +1,6 @@
 model:
-  name: "RelCrossDomainSampling"
-  notes: "test shot=1 / train shot=1"
+  name: "RelIdenticalDomainSampling"
+  notes: "test shot=1 / train shot=1 / only A"
   params:
     embedding_extractor:
       backbone: "block5"
@@ -8,12 +8,12 @@ model:
 
 
 checkpoint:
-  save_dir: "./checkpoint/rel_cross_domain_sampling.example/"
-  load_path: "./checkpoint/rel_cross_domain_sampling.example/RelCrossDomainSamplingTrainer.checkpoint.pkl"
+  save_dir: "./checkpoint/rel_identical_domain_sampling.example/"
+  load_path: "./checkpoint/rel_identical_domain_sampling.example/RelIdenticalDomainSamplingTrainer.checkpoint.pkl"
 
 
 cuda:
-  id: 1
+  id: 0
 
 
 modes:
@@ -21,7 +21,7 @@ modes:
     total_step: 25000
     report_step: 200
     save_step: 5000
-    start_val_step: 5000
+    start_val_step: 3000
     val_step: 500
     optimizer: "SGD"
     lr: 0.05
@@ -43,8 +43,8 @@ modes:
         meta:
           # - "./data/meta/photo.meta.json"
           - "./data/meta/art_painting.meta.json"
-          - "./data/meta/cartoon.meta.json"
-          - "./data/meta/sketch.meta.json"
+          # - "./data/meta/cartoon.meta.json"
+          # - "./data/meta/sketch.meta.json"
       val:
         root_dir: "./data/omniglot/"
         meta: "./data/meta/omniglot_1_shot.meta.json"
@@ -55,7 +55,7 @@ modes:
     total_step: 25000
     report_step: 200
     save_step: 5000
-    start_val_step: 5000
+    start_val_step: 3000
     val_step: 500
     optimizer: "SGD"
     lr: 0.05
@@ -77,8 +77,8 @@ modes:
         meta:
           # - "./data/meta/photo.meta.json"
           - "./data/meta/art_painting.meta.json"
-          - "./data/meta/cartoon.meta.json"
-          - "./data/meta/sketch.meta.json"
+          # - "./data/meta/cartoon.meta.json"
+          # - "./data/meta/sketch.meta.json"
       val:
         root_dir: "./data/omniglot/"
         meta: "./data/meta/omniglot_1_shot.meta.json"
