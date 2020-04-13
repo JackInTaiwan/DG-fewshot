@@ -1,10 +1,10 @@
 model:
   name: "RelCrossDomainSampling"
-  notes: "test shot=1 / train shot=1"
+  notes: "test shot=5 / train shot=5 / aug"
   params:
     embedding_extractor:
       backbone: "block5"
-      channel_size: 128
+      channel_size: 512
 
 
 checkpoint:
@@ -13,30 +13,31 @@ checkpoint:
 
 
 cuda:
-  id: 1
+  id: 0
 
 
 modes:
   train:
-    total_step: 25000
+    total_step: 110000
     report_step: 200
     save_step: 5000
-    start_val_step: 5000
-    val_step: 500
+    start_val_step: 30000
+    val_step: 1000
     optimizer: "SGD"
-    lr: 0.05
+    lr_extractor: 0.1
+    lr_relation: 0.0005
     warmup_period: 3000
     way: 5
-    shot: 1
+    shot: 5
     input_image_size: 64
     train_batch_size: 1
     augmentations:
-      false
+      # false
       # - "RandomResizedCrop"
-      # - "RandomAffine"
-      # - "RandomRotation"
+      - "RandomAffine"
+      - "RandomRotation"
       # - "ColorJitter"
-      # - "RandomHorizontalF1lip"
+      - "RandomHorizontalFlip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -47,30 +48,31 @@ modes:
           - "./data/meta/sketch.meta.json"
       val:
         root_dir: "./data/omniglot/"
-        meta: "./data/meta/omniglot_1_shot.meta.json"
+        meta: "./data/meta/omniglot_5_shot.meta.json"
       target:
         - ""
 
   resume:
-    total_step: 25000
+    total_step: 110000
     report_step: 200
     save_step: 5000
-    start_val_step: 5000
-    val_step: 500
+    start_val_step: 30000
+    val_step: 1000
     optimizer: "SGD"
-    lr: 0.05
+    lr: 0.1
+    lr_2: 0.0005
     warmup_period: 3000
     way: 5
-    shot: 1
+    shot: 5
     input_image_size: 64
     train_batch_size: 1
     augmentations:
-      false
+      # false
       # - "RandomResizedCrop"
-      # - "RandomAffine"
-      # - "RandomRotation"
+      - "RandomAffine"
+      - "RandomRotation"
       # - "ColorJitter"
-      # - "RandomHorizontalF1lip"
+      - "RandomHorizontalFlip"
     domain_dataset:
       source:
         root_dir: "./data/PACS/kfold"
@@ -81,7 +83,7 @@ modes:
           - "./data/meta/sketch.meta.json"
       val:
         root_dir: "./data/omniglot/"
-        meta: "./data/meta/omniglot_1_shot.meta.json"
+        meta: "./data/meta/omniglot_5_shot.meta.json"
       target:
         - ""
 
