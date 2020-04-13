@@ -96,19 +96,20 @@ class RelCrossDomainSamplingTrainer(TrainerBase):
     def build_optim(self):
         # NOTE: Must init optimizer after the model is moved to expected device to ensure the
         # consistency of the optimizer state dtype
-        lr = self.mode_config["lr"]
+        lr = self.mode_config["lr_extractor"]
+        lr_2 = self.mode_config["lr_relation"]
+
         if self.mode_config["optimizer"] == "SGD":
-            self.optim = optim.SGD(self.model.parameters(), lr=lr)
+            self.optim = optim.SGD(self.model.embedding_extractor.parameters(), lr=lr)
+            self.optim_2 = optim.SGD(self.model.relation_net.parameters(), lr=lr_2)
         elif self.mode_config["optimizer"] == "Adam":
-            self.optim = optim.Adam(self.model.parameters(), lr=lr)
+            self.optim = optim.SGD(self.model.embedding_extractor.parameters(), lr=lr)
+            self.optim_2 = optim.SGD(self.model.relation_net.parameters(), lr=lr_2)
         
         self.warmup_scheduler = warmup.LinearWarmup(
             self.optim,
             warmup_period=self.mode_config["warmup_period"],
         )
-
-        # # FIXME
-        # self.step_scheduler = StepLR(self.optim, step_size=50000,gamma=0.5)
 
         
     def build_loss(self):
@@ -174,6 +175,7 @@ class RelCrossDomainSamplingTrainer(TrainerBase):
                 loss = self.loss(scores, labels)
                 loss.backward()
                 self.optim.step()
+                self.optim_2.step()
 
                 # stats
                 step_time = time.time() - step_time_start
@@ -185,10 +187,9 @@ class RelCrossDomainSamplingTrainer(TrainerBase):
                 
                 accum_step += 1
                 self.optim.zero_grad()
+                self.optim_2.zero_grad()
                 self.global_step += 1
                 self.warmup_scheduler.dampen()
-                # # FIXME
-                # self.step_scheduler.step()
 
                 if self.global_step % self.report_step == 0:
                     avg_loss = accum_loss / accum_step
