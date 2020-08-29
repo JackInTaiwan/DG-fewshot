@@ -235,10 +235,10 @@ class ProtoCrossDomainSamplingTrainer(TrainerBase):
         self.model.eval()
 
         total_acc_list = torch.tensor([])
-        
         while self.val_data_loader.update_episode():
             support_data = self.val_data_loader.get_support_images()
-            support_data = support_data.to(self.device)
+            # support_data = support_data.to(self.device)
+            support_data = [support_per_class.to(self.device) for support_per_class in support_data]
 
             self.model.keep_support_features(support_data)
 
