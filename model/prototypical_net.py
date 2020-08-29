@@ -111,14 +111,19 @@ class PrototypicalNet(nn.Module):
 
     def keep_support_features(self, support_images):
         # (way, shot, 3, h, w)
-        way, shot = support_images.size(0), support_images.size(1)
-        support_images = support_images.view(-1, support_images.size(2), support_images.size(3), support_images.size(4))
+        way, shot = len(support_images), [len(support_per_class) for support_per_class in support_images]
+        support_images = torch.cat(support_images)
+
         with torch.no_grad():
             embeddings = self.embedding_extractor(support_images)
-            embeddings = embeddings.view(way, shot, -1)
-            embeddings = torch.mean(embeddings, dim=1).squeeze(dim=1)
+            count = 0
+            prototypes = []
+            for shot_ in shot:
+                prototypes.append(torch.mean(embeddings[count: count+shot_], dim=0).view(-1).unsqueeze(0))
+                count += shot_
+            prototypes = torch.cat(prototypes)
 
-        self.kept_support_features = embeddings
+        self.kept_support_features = prototypes
 
 
     def clean_support_features(self):
