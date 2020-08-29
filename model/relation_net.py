@@ -16,8 +16,6 @@ class RelationNet(nn.Module):
         self.embedding_extractor = self.build_embedding_extractor()
         self.relation_net = self.build_relation_net()
 
-        self.init_weight()
-
         # dynamic
         self.kept_support_features = None   # (way, channel_size, FM_h, FM_w)
 
@@ -40,17 +38,14 @@ class RelationNet(nn.Module):
                 nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
                 nn.BatchNorm2d(conv_block_channel_size),
                 nn.ReLU(True),
-                # nn.MaxPool2d(kernel_size=2, stride=2),
 
                 nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
                 nn.BatchNorm2d(conv_block_channel_size),
                 nn.ReLU(True),
-                # nn.MaxPool2d(kernel_size=2, stride=2),
 
                 nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
                 nn.BatchNorm2d(conv_block_channel_size),
                 nn.ReLU(True),
-                # nn.MaxPool2d(kernel_size=2, stride=2),
             )
 
         if self.params["embedding_extractor.backbone"] == "block4":
@@ -70,12 +65,10 @@ class RelationNet(nn.Module):
                 nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
                 nn.BatchNorm2d(conv_block_channel_size),
                 nn.ReLU(True),
-                # nn.MaxPool2d(kernel_size=2, stride=2),
 
                 nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
                 nn.BatchNorm2d(conv_block_channel_size),
                 nn.ReLU(True),
-                # nn.MaxPool2d(kernel_size=2, stride=2),
             )
         
         if self.params["embedding_extractor.backbone"] == "block3":
@@ -95,7 +88,6 @@ class RelationNet(nn.Module):
                 nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
                 nn.BatchNorm2d(conv_block_channel_size),
                 nn.ReLU(True),
-                # nn.MaxPool2d(kernel_size=2, stride=2),
             )
 
         elif self.params["embedding_extractor.backbone"] == "resnet18":
@@ -114,10 +106,10 @@ class RelationNet(nn.Module):
 
     
     def build_relation_net(self):
-        conv_block_channel_size = self.params["embedding_extractor.channel_size"] * 2
+        conv_block_channel_size = self.params["embedding_extractor.channel_size"]
 
         return nn.Sequential(
-            nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+            nn.Conv2d(conv_block_channel_size*2, conv_block_channel_size, 3, padding=1),
             nn.BatchNorm2d(conv_block_channel_size),
             nn.ReLU(True),
             nn.MaxPool2d(kernel_size=2, stride=2),
@@ -134,22 +126,6 @@ class RelationNet(nn.Module):
             nn.Linear(8, 1),
             nn.Sigmoid()
         )
-    
-
-    def init_weight(self):
-        def weights_init(m):
-            classname = m.__class__.__name__
-            if classname.find('Conv') != -1:
-                nn.init.kaiming_normal_(m.weight.data)
-                if m.bias is not None:
-                    m.bias.data.zero_()
-            elif classname.find('Linear') != -1:
-                n = m.weight.size(1)
-                m.weight.data.normal_(0, 0.01)
-                m.bias.data = torch.ones(m.bias.data.size())
-        
-        self.embedding_extractor.apply(weights_init)
-        self.relation_net.apply(weights_init)
 
 
     def forward(self, support_images, query_images):

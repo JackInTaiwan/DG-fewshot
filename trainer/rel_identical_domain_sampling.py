@@ -16,7 +16,7 @@ from tensorboardX import SummaryWriter
 
 from .trainer_base import TrainerBase
 from model import RelationNet
-from data_loader import CrossDomainSamplingDataLoader as SamplingDataLoader
+from data_loader import IdenticalDomainSamplingDataLoader as SamplingDataLoader
 from data_loader import CrossDomainSamplingEvalDataLoader
 
 torch.backends.cudnn.deterministic = True
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class RelCrossDomainSamplingTrainer(TrainerBase):
+class RelIdenticalDomainSamplingTrainer(TrainerBase):
     def __init__(self, config, mode, use_cpu):
         super().__init__()
 
@@ -98,12 +98,11 @@ class RelCrossDomainSamplingTrainer(TrainerBase):
         # consistency of the optimizer state dtype
         lr = self.mode_config["lr_extractor"]
         lr_2 = self.mode_config["lr_relation"]
-
         if self.mode_config["optimizer"] == "SGD":
-            self.optim = optim.SGD(self.model.embedding_extractor.parameters(), lr=lr)
+            self.optim = optim.SGD(self.model.parameters(), lr=lr)
             self.optim_2 = optim.SGD(self.model.relation_net.parameters(), lr=lr_2)
         elif self.mode_config["optimizer"] == "Adam":
-            self.optim = optim.SGD(self.model.embedding_extractor.parameters(), lr=lr)
+            self.optim = optim.SGD(self.model.parameters(), lr=lr)
             self.optim_2 = optim.SGD(self.model.relation_net.parameters(), lr=lr_2)
         
         self.warmup_scheduler = warmup.LinearWarmup(

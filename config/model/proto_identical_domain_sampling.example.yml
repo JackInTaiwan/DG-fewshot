@@ -9,7 +9,7 @@ model:
 
 checkpoint:
   save_dir: "./checkpoint/proto_identical_domain_sampling.example/"
-  load_path: "./checkpoint/proto_identical_domain_sampling.example/ProtoIdenticalDomainSampling.checkpoint.pkl"
+  load_path: "./checkpoint/proto_identical_domain_sampling.example/ProtoIdenticalDomainSamplingTrainer.checkpoint.pkl"
 
 
 cuda:
