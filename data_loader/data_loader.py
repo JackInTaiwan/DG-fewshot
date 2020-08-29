@@ -225,9 +225,10 @@ class CrossDomainSamplingEvalDataLoader:
                 image = self.__image_preprocess(image)
                 image = image.unsqueeze(0)
                 class_images.append(image)
-            support_images.append(torch.cat(class_images).unsqueeze(0))
+            # support_images.append(torch.cat(class_images).unsqueeze(0))
+            support_images.append(torch.cat(class_images))
 
-        support_images = torch.cat(support_images)
+        # support_images = torch.cat(support_images)
 
         return support_images
     
