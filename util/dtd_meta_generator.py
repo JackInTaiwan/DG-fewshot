@@ -27,7 +27,7 @@ def get_dataset(split_file, images_dir):
     for class_name in os.listdir(images_dir):
         if class_name in test_split:
             for file_name in os.listdir(os.path.join(images_dir, class_name)):
-                file_path = os.path.join(images_dir, class_name, file_name)
+                file_path = os.path.join(class_name, file_name)
                 if class_name not in test_dataset:
                     test_dataset[class_name] = [file_path]
                 else:
