@@ -43,17 +43,23 @@ def generate_meta_file(split_file, images_file, output_fp, way, shot, test_episo
     if is_metadataset:
         test_data = []
         for episode in range(val_episode):
-            way = random.choice(range(5, len(test_dataset)))
+            way = random.choice(range(5, min([50, len(test_dataset)])))
             query_num_per_class = 10
-            support_set_size = 500
+
             selected_class_name_list = random.sample(test_dataset.keys(), way)
-            support_data, query_data = [], []
             alpha_list = [random.uniform(np.log10(0.5), np.log10(2)) for _ in range(way)]
             total_class_size_portion = sum([np.exp(alpha)*len(test_dataset[class_name]) for alpha, class_name in zip(alpha_list, selected_class_name_list)])
+
+            beta = random.uniform(0, 1)
+            support_set_size = min([
+                500,
+                sum([np.ceil(beta * min([100, available_size-query_num_per_class])) for available_size in [len(test_dataset[class_name]) for class_name in selected_class_name_list]])
+            ])
             
+            support_data, query_data = [], []
             for class_index, class_name in enumerate(selected_class_name_list):
                 shot = min([
-                    int((support_set_size - way) * np.exp(alpha_list[class_index]) * len(test_dataset[class_name]) / total_class_size_portion),
+                    1 + int((support_set_size - way) * np.exp(alpha_list[class_index]) * len(test_dataset[class_name]) / total_class_size_portion),
                     len(test_dataset[class_name]) - query_num_per_class
                 ])
                 selected_fn_list = random.sample(test_dataset[class_name], shot + query_num_per_class)
