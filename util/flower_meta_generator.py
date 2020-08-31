@@ -33,7 +33,7 @@ def get_dataset(split_file, images_dir, labels_file):
     for label, file_name in zip(labels, sorted(os.listdir(images_dir))):
         if int(label) in test_split:
             class_name = label
-            file_path = os.path.join(images_dir, file_name)
+            file_path = file_name
             if class_name not in test_dataset:
                 test_dataset[class_name] = [file_path]
             else:
