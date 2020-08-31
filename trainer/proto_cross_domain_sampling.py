@@ -97,14 +97,17 @@ class ProtoCrossDomainSamplingTrainer(TrainerBase):
         # consistency of the optimizer state dtype
         lr = self.mode_config["lr"]
         if self.mode_config["optimizer"] == "SGD":
-            self.optim = optim.SGD(self.model.parameters(), lr=lr)
+            self.optim = optim.SGD(self.model.parameters(), lr=lr, weight_decay=1e-4)
         elif self.mode_config["optimizer"] == "Adam":
-            self.optim = optim.Adam(self.model.parameters(), lr=lr)
+            self.optim = optim.Adam(self.model.parameters(), lr=lr, weight_decay=1e-4)
         
-        self.warmup_scheduler = warmup.LinearWarmup(
-            self.optim,
-            warmup_period=self.mode_config["warmup_period"],
-        )
+        # self.warmup_scheduler = warmup.LinearWarmup(
+        #     self.optim,
+        #     warmup_period=self.mode_config["warmup_period"],
+        # )
+
+        # FIXME
+        self.scheduler = optim.lr_scheduler.ExponentialLR(self.optim, 0.8)
 
 
     def build_loss(self):
@@ -186,7 +189,10 @@ class ProtoCrossDomainSamplingTrainer(TrainerBase):
                 self.optim.zero_grad()
                 self.global_step += 1
                 accum_step += 1
-                self.warmup_scheduler.dampen()
+                # self.warmup_scheduler.dampen()
+
+                if self.global_step % 10000 == 0:
+                    self.scheduler.step()
 
                 if self.global_step % self.report_step == 0:
                     avg_loss = accum_loss / accum_step
@@ -243,6 +249,7 @@ class ProtoCrossDomainSamplingTrainer(TrainerBase):
             self.model.keep_support_features(support_data)
 
             total_distances, total_labels = torch.tensor([]), torch.tensor([])
+
             for (query_images, query_labels) in self.val_data_loader:
                 query_images = query_images.to(self.device)
                 distances = self.model.inference(query_images)
