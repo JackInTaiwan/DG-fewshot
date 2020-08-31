@@ -73,6 +73,26 @@ class PrototypicalNet(nn.Module):
                 nn.ReLU(True),
                 nn.MaxPool2d(kernel_size=2, stride=2),
             )
+        
+        if self.params["embedding_extractor.backbone"] == "block3":
+            conv_block_channel_size = self.params["embedding_extractor.channel_size"]
+
+            return nn.Sequential(
+                nn.Conv2d(3, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
+                nn.Conv2d(conv_block_channel_size, conv_block_channel_size, 3, padding=1),
+                nn.BatchNorm2d(conv_block_channel_size),
+                nn.ReLU(True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+            )
 
         elif self.params["embedding_extractor.backbone"] == "resnet18":
             resnet = resnet18(pretrained=False)
@@ -112,17 +132,16 @@ class PrototypicalNet(nn.Module):
     def keep_support_features(self, support_images):
         # (way, shot, 3, h, w)
         way, shot = len(support_images), [len(support_per_class) for support_per_class in support_images]
-        support_images = torch.cat(support_images)
+        # support_images = torch.cat(support_images)
 
-        with torch.no_grad():
-            embeddings = self.embedding_extractor(support_images)
-            count = 0
-            prototypes = []
-            for shot_ in shot:
-                prototypes.append(torch.mean(embeddings[count: count+shot_], dim=0).view(-1).unsqueeze(0))
-                count += shot_
-            prototypes = torch.cat(prototypes)
-
+        count = 0
+        prototypes = []
+        for i, shot_ in enumerate(shot):
+            with torch.no_grad():
+                embeddings = self.embedding_extractor(support_images[i])
+            prototypes.append(torch.mean(embeddings, dim=0).view(-1).unsqueeze(0))
+        
+        prototypes = torch.cat(prototypes)
         self.kept_support_features = prototypes
 
 
