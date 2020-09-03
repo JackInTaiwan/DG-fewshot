@@ -95,7 +95,9 @@ class PrototypicalNet(nn.Module):
             )
 
         elif self.params["embedding_extractor.backbone"] == "resnet18":
-            resnet = resnet18(pretrained=False)
+            # FIXME
+            # resnet = resnet18(pretrained=False)
+            resnet = resnet18(pretrained=True)
             
             return nn.Sequential(
                 resnet.conv1,
