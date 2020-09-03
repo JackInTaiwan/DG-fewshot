@@ -107,7 +107,7 @@ class ProtoCrossDomainSamplingTrainer(TrainerBase):
         # )
 
         # FIXME
-        self.scheduler = optim.lr_scheduler.ExponentialLR(self.optim, 0.8)
+        self.scheduler = optim.lr_scheduler.ExponentialLR(self.optim, 0.9)
 
 
     def build_loss(self):
