@@ -107,7 +107,8 @@ class PrototypicalNet(nn.Module):
                 resnet.layer1,
                 resnet.layer2,
                 resnet.layer3,
-                resnet.layer4
+                resnet.layer4,
+                resnet.avgpool
             )
     
 
