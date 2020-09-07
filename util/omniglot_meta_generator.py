@@ -3,6 +3,7 @@ import re
 import json
 import logging
 import random
+import numpy as np
 
 from argparse import ArgumentParser
 from util.logging import logging_config
@@ -22,7 +23,7 @@ def get_dataset(file_dir):
             if re.match(r".*\.png", fn) is not None:
                 dataset[class_name].append(os.path.join(os.path.basename(file_dir), class_name, fn))
     
-    logging.info("| Alphabet '{}' Dataset contains {} classes.".format(file_dir, len(dataset)))
+    # logging.info("| Alphabet '{}' Dataset contains {} classes.".format(file_dir, len(dataset)))
     return dataset
 
 
@@ -35,16 +36,29 @@ def generate_meta_file(file_dir, output_fp, way, shot, val_episode, val_query_nu
             selected_alphabet = random.sample(os.listdir(file_dir), k=1)[0]
             selected_alphabet_dp = os.path.join(file_dir, selected_alphabet)
             dataset = get_dataset(selected_alphabet_dp)
-            
+
             way = random.choice(range(5, min([50, len(dataset)])))
             query_num_per_class = 10
-            support_set_size = 10 * way
+
+            selected_class_name_list = random.sample(dataset.keys(), way)
+            alpha_list = [random.uniform(np.log10(0.5), np.log10(2)) for _ in range(way)]
+            total_class_size_portion = sum([np.exp(alpha)*len(dataset[class_name]) for alpha, class_name in zip(alpha_list, selected_class_name_list)])
+
+            beta = random.uniform(0, 1)
+            support_set_size = min([
+                500,
+                sum([np.ceil(beta * min([100, available_size-query_num_per_class])) for available_size in [len(dataset[class_name]) for class_name in selected_class_name_list]])
+            ])
             
             selected_class_name_list = random.sample(os.listdir(selected_alphabet_dp), way)
             support_data, query_data = [], []
             dataset = get_dataset(selected_alphabet_dp)
             for class_index, selected_class_name in enumerate(selected_class_name_list):
-                selected_fn_list = random.sample(dataset[selected_class_name], shot + val_query_num)
+                shot = min([
+                    1 + int((support_set_size - way) * np.exp(alpha_list[class_index]) * len(dataset[selected_class_name]) / total_class_size_portion),
+                    len(dataset[selected_class_name]) - query_num_per_class
+                ])
+                selected_fn_list = random.sample(dataset[selected_class_name], shot + query_num_per_class)
                 selected_support_fn_list = selected_fn_list[:shot]
                 selected_query_fn_list = selected_fn_list[shot:]
                 
