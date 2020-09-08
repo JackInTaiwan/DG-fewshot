@@ -15,6 +15,7 @@ tqdm = "*"
 tensorboardx = "==2.0"
 tensorboard = "==2.2.0"
 scipy = "==1.4.1"
+matplotlib = "*"
 
 [requires]
 python_version = "3.7"
