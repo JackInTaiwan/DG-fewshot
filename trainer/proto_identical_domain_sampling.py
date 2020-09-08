@@ -230,18 +230,18 @@ class ProtoIdenticalDomainSamplingTrainer(TrainerBase):
 
         logger.info("| Run validation ...")
         torch.cuda.empty_cache()
-        
+
         self.model.eval()
 
         total_acc_list = torch.tensor([])
-        
         while self.val_data_loader.update_episode():
             support_data = self.val_data_loader.get_support_images()
-            support_data = support_data.to(self.device)
+            support_data = [support_per_class.to(self.device) for support_per_class in support_data]
 
             self.model.keep_support_features(support_data)
 
             total_distances, total_labels = torch.tensor([]), torch.tensor([])
+
             for (query_images, query_labels) in self.val_data_loader:
                 query_images = query_images.to(self.device)
                 distances = self.model.inference(query_images)
@@ -271,7 +271,7 @@ class ProtoIdenticalDomainSamplingTrainer(TrainerBase):
         if avg_acc > self.best_val_acc:
             self.best_val_acc = avg_acc
             self.save_checkpoint(save_best=True)
-
+        
         torch.cuda.empty_cache()
         
         logger.info("| Finish validation.")
